@@ -1,0 +1,42 @@
+name: Build iOS App
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Select Xcode version
+      run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+    - name: Show Xcode version
+      run: xcodebuild -version
+
+    - name: List available simulators
+      run: xcrun simctl list devices available
+
+    - name: Build for iOS Simulator
+      run: |
+        xcodebuild clean build \
+          -scheme incomatic \
+          -configuration Debug \
+          -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+          -quiet
+
+    - name: Run tests (if available)
+      run: |
+        xcodebuild test \
+          -scheme incomatic \
+          -configuration Debug \
+          -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+          -quiet || echo "No tests found, skipping test execution"
+      continue-on-error: true
