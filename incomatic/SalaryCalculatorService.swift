@@ -4,20 +4,51 @@
 //
 //  Created by Ben Makusha on 11/9/25.
 //
-//  API service for calculating salary breakdown
+//  API service for calculating salary breakdown.
 //
 
 import Foundation
 
-// MARK: - Request/Response Models
+// MARK: - API Request Models
+
 struct SalaryCalculationRequest: Codable {
     let country: String
     let taxYear: Int
-    let annualSalary: Double
-    let cadence: String? // "ANNUAL", "MONTHLY", "BIWEEKLY", "WEEKLY"
+    /// Legacy combined annual amount. When `earnings` is set, prefer that.
+    let annualSalary: Double?
+    /// Legacy bonus shim. When `earnings.bonus` is set, prefer that.
+    let bonus: Double?
+    /// Structured earnings (salary OR hourly + bonus + commission). Preferred.
+    let earnings: Earnings?
+    /// ISO-8601 date string (e.g. "2026-05-28"). Optional, informational.
+    let payDate: String?
+    let cadence: String?
     let pretax: PreTaxDeductions?
     let posttax: PostTaxDeductions?
     let countryOptions: CountryOptions
+}
+
+struct Earnings: Codable {
+    let salary: SalaryRow?
+    let hourly: HourlyRow?
+    let bonus: Double?
+    let commission: Double?
+}
+
+struct SalaryRow: Codable {
+    let amount: Double
+    /// "PER_YEAR" or "PER_PERIOD"
+    let basis: String
+}
+
+struct HourlyRow: Codable {
+    let rate: Double
+    /// Hours per pay period (backend multiplies by periodsPerYear).
+    let regularHours: Double?
+    let overtimeHours: Double?
+    let overtimeMultiplier: Double?
+    let doubleTimeHours: Double?
+    let doubleTimeMultiplier: Double?
 }
 
 struct CountryOptions: Codable {
@@ -27,8 +58,25 @@ struct CountryOptions: Codable {
 
 struct USOptions: Codable {
     let state: String
-    let filingStatus: String // "SINGLE", "MARRIED"
+    let filingStatus: String
     let allowances: Int?
+    let w4: W4?
+}
+
+struct W4: Codable {
+    let useOldW4: Bool?
+    let nonresidentAlien: Bool?
+    /// $2000 per qualifying child + $500 per other dependent.
+    let dependentsAmount: Double?
+    /// Annual non-job income (W-4 step 4(a)).
+    let otherIncome: Double?
+    /// Itemized deductions (W-4 step 4(b)). Overrides standard deduction if greater.
+    let itemizedDeductions: Double?
+    /// Additional federal withholding PER PAY PERIOD (W-4 step 4(c)).
+    let additionalWithholding: Double?
+    let exemptFederal: Bool?
+    let exemptSocialSecurity: Bool?
+    let exemptMedicare: Bool?
 }
 
 struct UKOptions: Codable {
@@ -39,14 +87,24 @@ struct UKOptions: Codable {
 
 struct PreTaxDeductions: Codable {
     let pensionPercent: Double?
+    /// Catch-all fixed annual amount (still supported for back-compat).
     let fixed: Double?
     let hsa: Double?
+    let medical: Double?
+    let dental: Double?
+    let vision: Double?
+    let healthcareFsa: Double?
+    let dependentCareFsa: Double?
 }
 
 struct PostTaxDeductions: Codable {
     let fixed: Double?
+    /// Roth 401(k) percent of regular wages (0–1).
+    let roth401kPercent: Double?
     let studentLoanPlan: String?
 }
+
+// MARK: - API Response Models
 
 struct SalaryCalculationResponse: Codable {
     let calculationId: String
@@ -61,6 +119,9 @@ struct SalaryCalculationResponse: Codable {
 struct LineItem: Codable {
     let name: String
     let amount: Double
+    /// EARNINGS, TAX_FEDERAL, TAX_FICA, TAX_STATE, PRE_TAX_BENEFIT, RETIREMENT, POST_TAX, NET.
+    /// May be nil on legacy or untagged items.
+    let category: String?
 }
 
 struct ExplanationItem: Codable {
@@ -68,25 +129,54 @@ struct ExplanationItem: Codable {
     let text: String
 }
 
-// MARK: - View-friendly models for UI display
-struct ViewFriendlyResponse {
-    let grossPay: GrossPay
-    let taxes: Taxes
-    let deductions: Deductions
-    let netPay: NetPay
+// MARK: - Benefits Input
+// Not sent to the API as individual fields — combined into pretax.fixed.
+// Tracked locally so the results screen can display individual line items.
+struct BenefitsInput {
+    var medicalPremium: Double = 0       // Annual
+    var dentalPremium: Double = 0        // Annual
+    var lifeInsurancePremium: Double = 0 // Annual
 }
 
-struct GrossPay {
-    let annual: Double
-    let perPayPeriod: Double
+// MARK: - View-Friendly Models
+
+struct ViewFriendlyResponse {
+    let grossPay: GrossPayDetails
+    let taxes: Taxes
+    let benefits: BenefitsBreakdown
+    let netPay: NetPay
+    let currency: String
+    let calculationId: String
+    let rulePackVersion: String
+    /// Raw API line items, per-cadence, with category tags. Used by the donut + itemized summary.
+    let lineItems: [LineItem]
+}
+
+struct GrossPayDetails {
+    let baseSalaryPerPeriod: Double
+    let bonusPerPeriod: Double
+    let totalPerPeriod: Double
+    let annualTotal: Double
     let payFrequency: String
+}
+
+struct BenefitsBreakdown {
+    let medical: Double
+    let dental: Double
+    let retirement401k: Double
+    let lifeInsurance: Double
+    var total: Double { medical + dental + retirement401k + lifeInsurance }
 }
 
 struct Taxes {
     let federal: TaxBreakdown?
-    let state: TaxBreakdown?
+    let stateTax: TaxBreakdown?
     let local: TaxBreakdown?
-    let fica: FICATaxes
+    /// Social Security + Medicare combined for the FICA display row.
+    let ficaCombined: Double
+    let socialSecurity: TaxBreakdown?
+    let medicare: TaxBreakdown?
+    let additionalMedicare: TaxBreakdown?
     let totalTaxes: Double
     let effectiveTaxRate: Double
 }
@@ -97,220 +187,210 @@ struct TaxBreakdown {
     let description: String
 }
 
-struct FICATaxes {
-    let socialSecurity: TaxBreakdown?
-    let medicare: TaxBreakdown?
-    let additionalMedicare: TaxBreakdown?
-    let total: Double
-}
-
-struct Deductions {
-    let preTax: [DeductionItem]
-    let postTax: [DeductionItem]
-    let total: Double
-}
-
-struct DeductionItem {
-    let name: String
-    let amount: Double
-}
-
 struct NetPay {
-    let annual: Double
     let perPayPeriod: Double
+    let annual: Double
     let takeHomePercentage: Double
 }
 
-// MARK: - API Service
+// MARK: - Service
+
 class SalaryCalculatorService {
-    // Update this with your actual API endpoint
     private let baseURL = "http://localhost:8080"
-    
+
     enum APIError: LocalizedError {
         case invalidURL
         case networkError(Error)
         case invalidResponse
         case decodingError(Error)
         case serverError(String)
-        
+
         var errorDescription: String? {
             switch self {
-            case .invalidURL:
-                return "Invalid API URL"
-            case .networkError(let error):
-                return "Network error: \(error.localizedDescription)"
-            case .invalidResponse:
-                return "Invalid response from server"
-            case .decodingError(let error):
-                return "Failed to decode response: \(error.localizedDescription)"
-            case .serverError(let message):
-                return message
+            case .invalidURL:           return "Invalid API URL"
+            case .networkError(let e):  return "Network error: \(e.localizedDescription)"
+            case .invalidResponse:      return "Invalid response from server"
+            case .decodingError(let e): return "Failed to decode response: \(e.localizedDescription)"
+            case .serverError(let m):   return m
             }
         }
     }
-    
-    func calculateSalary(request: SalaryCalculationRequest) async throws -> ViewFriendlyResponse {
+
+    struct StateEntry: Codable, Identifiable, Hashable {
+        let code: String
+        let name: String
+        var id: String { code }
+    }
+
+    func fetchUSStates() async throws -> [StateEntry] {
+        guard let url = URL(string: "\(baseURL)/v1/countries/US/states") else {
+            throw APIError.invalidURL
+        }
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw APIError.invalidResponse
+        }
+        return try JSONDecoder().decode([StateEntry].self, from: data)
+    }
+
+    func calculateSalary(
+        request: SalaryCalculationRequest,
+        baseSalaryAnnual: Double,
+        bonusAnnual: Double,
+        benefits: BenefitsInput
+    ) async throws -> ViewFriendlyResponse {
         guard let url = URL(string: "\(baseURL)/v1/calculate") else {
             throw APIError.invalidURL
         }
-        
+
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+
         do {
-            let jsonData = try JSONEncoder().encode(request)
-            urlRequest.httpBody = jsonData
-            
-            // Debug print
-            if let jsonString = String(data: jsonData, encoding: .utf8) {
-                print("Request JSON: \(jsonString)")
-            }
-            
-            let (data, response) = try await URLSession.shared.data(for: urlRequest)
-            
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw APIError.invalidResponse
-            }
-            
-            guard (200...299).contains(httpResponse.statusCode) else {
-                if let errorMessage = String(data: data, encoding: .utf8) {
-                    throw APIError.serverError(errorMessage)
-                }
-                throw APIError.serverError("Server returned status code: \(httpResponse.statusCode)")
-            }
-            
-            let decoder = JSONDecoder()
-            let apiResponse = try decoder.decode(SalaryCalculationResponse.self, from: data)
-            
-            // Transform API response to view-friendly format
-            return transformToViewFriendly(apiResponse: apiResponse, originalRequest: request)
-            
-        } catch let error as APIError {
-            throw error
-        } catch let error as DecodingError {
-            throw APIError.decodingError(error)
+            urlRequest.httpBody = try JSONEncoder().encode(request)
         } catch {
             throw APIError.networkError(error)
         }
+
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await URLSession.shared.data(for: urlRequest)
+        } catch {
+            throw APIError.networkError(error)
+        }
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let message = String(data: data, encoding: .utf8) ?? "Server returned \(httpResponse.statusCode)"
+            throw APIError.serverError(message)
+        }
+
+        let apiResponse: SalaryCalculationResponse
+        do {
+            apiResponse = try JSONDecoder().decode(SalaryCalculationResponse.self, from: data)
+        } catch {
+            throw APIError.decodingError(error)
+        }
+
+        return transformToViewFriendly(
+            apiResponse: apiResponse,
+            originalRequest: request,
+            baseSalaryAnnual: baseSalaryAnnual,
+            bonusAnnual: bonusAnnual,
+            benefits: benefits
+        )
     }
-    
-    // Transform the API response to our view-friendly format
-    private func transformToViewFriendly(apiResponse: SalaryCalculationResponse, originalRequest: SalaryCalculationRequest) -> ViewFriendlyResponse {
-        
-        // Calculate annual amounts based on cadence
+
+    // MARK: - Response Transformation
+
+    private func transformToViewFriendly(
+        apiResponse: SalaryCalculationResponse,
+        originalRequest: SalaryCalculationRequest,
+        baseSalaryAnnual: Double,
+        bonusAnnual: Double,
+        benefits: BenefitsInput
+    ) -> ViewFriendlyResponse {
         let cadence = originalRequest.cadence ?? "ANNUAL"
         let periodsPerYear: Double
         let displayCadence: String
-        
+
         switch cadence {
-        case "WEEKLY":
-            periodsPerYear = 52
-            displayCadence = "weekly"
-        case "BIWEEKLY":
-            periodsPerYear = 26
-            displayCadence = "biweekly"
-        case "MONTHLY":
-            periodsPerYear = 12
-            displayCadence = "monthly"
-        default: // ANNUAL
-            periodsPerYear = 1
-            displayCadence = "annual"
+        case "DAILY":       periodsPerYear = 260; displayCadence = "daily"
+        case "WEEKLY":      periodsPerYear = 52;  displayCadence = "weekly"
+        case "BIWEEKLY":    periodsPerYear = 26;  displayCadence = "biweekly"
+        case "SEMIMONTHLY": periodsPerYear = 24;  displayCadence = "semi-monthly"
+        case "MONTHLY":     periodsPerYear = 12;  displayCadence = "monthly"
+        case "QUARTERLY":   periodsPerYear = 4;   displayCadence = "quarterly"
+        case "SEMIANNUAL":  periodsPerYear = 2;   displayCadence = "semi-annual"
+        default:            periodsPerYear = 1;   displayCadence = "annual"
         }
-        
-        let annualGross = cadence == "ANNUAL" ? apiResponse.grossPerCadence : apiResponse.grossPerCadence * periodsPerYear
-        let annualNet = cadence == "ANNUAL" ? apiResponse.netPerCadence : apiResponse.netPerCadence * periodsPerYear
-        
-        // Parse line items
+
+        let annualGross = periodsPerYear == 1
+            ? apiResponse.grossPerCadence
+            : apiResponse.grossPerCadence * periodsPerYear
+        let annualNet = periodsPerYear == 1
+            ? apiResponse.netPerCadence
+            : apiResponse.netPerCadence * periodsPerYear
+
         var federalTax: TaxBreakdown?
         var stateTax: TaxBreakdown?
         var localTax: TaxBreakdown?
         var socialSecurity: TaxBreakdown?
         var medicare: TaxBreakdown?
         var additionalMedicare: TaxBreakdown?
-        var preTaxDeductions: [DeductionItem] = []
-        var postTaxDeductions: [DeductionItem] = []
+        var pension401k: Double = 0
         var totalTaxes: Double = 0
-        
+
         for item in apiResponse.lineItems {
-            _ = cadence == "ANNUAL" ? item.amount : item.amount * periodsPerYear
-            
-            if item.name.contains("Federal Income Tax") {
-                federalTax = TaxBreakdown(amount: item.amount, rate: nil, description: item.name)
+            let name = item.name
+            if name.contains("Federal Income Tax") {
+                federalTax = TaxBreakdown(amount: item.amount, rate: nil, description: name)
                 totalTaxes += item.amount
-            } else if item.name.contains("State Income Tax") {
-                stateTax = TaxBreakdown(amount: item.amount, rate: nil, description: item.name)
+            } else if name.contains("State Income Tax") {
+                stateTax = TaxBreakdown(amount: item.amount, rate: nil, description: name)
                 totalTaxes += item.amount
-            } else if item.name.contains("Local") && item.name.contains("Tax") {
-                localTax = TaxBreakdown(amount: item.amount, rate: nil, description: item.name)
+            } else if name.contains("Local") && name.contains("Tax") {
+                localTax = TaxBreakdown(amount: item.amount, rate: nil, description: name)
                 totalTaxes += item.amount
-            } else if item.name.contains("Social Security") || item.name.contains("FICA (Social Security)") {
+            } else if name.contains("Social Security") || name.contains("FICA (Social Security)") {
                 socialSecurity = TaxBreakdown(amount: item.amount, rate: 6.2, description: "Social Security")
                 totalTaxes += item.amount
-            } else if item.name.contains("Medicare") && !item.name.contains("Additional") {
+            } else if name.contains("Additional Medicare") {
+                additionalMedicare = TaxBreakdown(amount: item.amount, rate: 0.9, description: "Additional Medicare")
+                totalTaxes += item.amount
+            } else if name.contains("Medicare") {
                 medicare = TaxBreakdown(amount: item.amount, rate: 1.45, description: "Medicare")
                 totalTaxes += item.amount
-            } else if item.name.contains("Additional Medicare") {
-                additionalMedicare = TaxBreakdown(amount: item.amount, rate: 0.9, description: "Additional Medicare Tax")
-                totalTaxes += item.amount
-            } else if item.name.contains("Pre-tax Deductions") || item.name.contains("Employee Pension") || item.name.contains("HSA") {
-                if item.amount > 0 {
-                    preTaxDeductions.append(DeductionItem(name: item.name, amount: item.amount))
-                }
-            } else if item.name.contains("Post-tax Deductions") {
-                if item.amount > 0 {
-                    postTaxDeductions.append(DeductionItem(name: item.name, amount: item.amount))
-                }
+            } else if name.contains("Employee Pension") || name.contains("401") {
+                pension401k = item.amount
             }
         }
-        
-        let ficaTotal = (socialSecurity?.amount ?? 0) + (medicare?.amount ?? 0) + (additionalMedicare?.amount ?? 0)
-        let fica = FICATaxes(
-            socialSecurity: socialSecurity,
-            medicare: medicare,
-            additionalMedicare: additionalMedicare,
-            total: ficaTotal
-        )
-        
-        let effectiveTaxRate = annualGross > 0 ? (totalTaxes * periodsPerYear / annualGross) * 100 : 0
-        let takeHomePercentage = annualGross > 0 ? (annualNet / annualGross) * 100 : 0
-        
-        let grossPay = GrossPay(
-            annual: annualGross,
-            perPayPeriod: apiResponse.grossPerCadence,
-            payFrequency: displayCadence
-        )
-        
-        let taxes = Taxes(
-            federal: federalTax,
-            state: stateTax,
-            local: localTax,
-            fica: fica,
-            totalTaxes: totalTaxes,
-            effectiveTaxRate: effectiveTaxRate
-        )
-        
-        let preTaxTotal = preTaxDeductions.reduce(0) { $0 + $1.amount }
-        let postTaxTotal = postTaxDeductions.reduce(0) { $0 + $1.amount }
-        
-        let deductions = Deductions(
-            preTax: preTaxDeductions,
-            postTax: postTaxDeductions,
-            total: preTaxTotal + postTaxTotal
-        )
-        
-        let netPay = NetPay(
-            annual: annualNet,
-            perPayPeriod: apiResponse.netPerCadence,
-            takeHomePercentage: takeHomePercentage
-        )
-        
+
+        let ficaCombined = (socialSecurity?.amount ?? 0)
+            + (medicare?.amount ?? 0)
+            + (additionalMedicare?.amount ?? 0)
+
+        let effectiveTaxRate = annualGross > 0
+            ? (totalTaxes * periodsPerYear / annualGross) * 100
+            : 0
+
         return ViewFriendlyResponse(
-            grossPay: grossPay,
-            taxes: taxes,
-            deductions: deductions,
-            netPay: netPay
+            grossPay: GrossPayDetails(
+                baseSalaryPerPeriod: baseSalaryAnnual / periodsPerYear,
+                bonusPerPeriod: bonusAnnual / periodsPerYear,
+                totalPerPeriod: apiResponse.grossPerCadence,
+                annualTotal: annualGross,
+                payFrequency: displayCadence
+            ),
+            taxes: Taxes(
+                federal: federalTax,
+                stateTax: stateTax,
+                local: localTax,
+                ficaCombined: ficaCombined,
+                socialSecurity: socialSecurity,
+                medicare: medicare,
+                additionalMedicare: additionalMedicare,
+                totalTaxes: totalTaxes,
+                effectiveTaxRate: effectiveTaxRate
+            ),
+            benefits: BenefitsBreakdown(
+                medical: benefits.medicalPremium / periodsPerYear,
+                dental: benefits.dentalPremium / periodsPerYear,
+                retirement401k: pension401k,
+                lifeInsurance: benefits.lifeInsurancePremium / periodsPerYear
+            ),
+            netPay: NetPay(
+                perPayPeriod: apiResponse.netPerCadence,
+                annual: annualNet,
+                takeHomePercentage: annualGross > 0 ? (annualNet / annualGross) * 100 : 0
+            ),
+            currency: apiResponse.currency,
+            calculationId: apiResponse.calculationId,
+            rulePackVersion: apiResponse.rulePackVersion,
+            lineItems: apiResponse.lineItems
         )
     }
 }
-

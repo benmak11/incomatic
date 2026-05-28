@@ -55,7 +55,7 @@ class LocationManager: NSObject, ObservableObject {
         // State code to full name mapping
         let stateCodeToName: [String: String] = [
             "AL": "Alabama",
-            "AK":"Alaska",
+            "AK": "Alaska",
             "AZ": "Arizona",
             "AR": "Arkansas",
             "CA": "California",
