@@ -1,0 +1,64 @@
+//
+//  
+//  InsightsTab.swift
+//  incomatic
+//
+//  Created by Ben Makusha on 05/28/2026
+//
+//  Router for the Insights screen: loading → result → empty.
+//
+
+import SwiftUI
+
+struct InsightsTab: View {
+    let result: ViewFriendlyResponse?
+    let isLoading: Bool
+    let errorMessage: String?
+    let onAdjust: () -> Void
+
+    var body: some View {
+        Group {
+            if isLoading {
+                VStack(spacing: 16) {
+                    ProgressView().tint(.incSage)
+                    Text("Calculating…").font(.system(size: 14)).foregroundColor(.incTextDim)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.incBg.ignoresSafeArea())
+            } else if let result = result {
+                EarningsBreakdownView(result: result, onAdjust: onAdjust)
+            } else {
+                emptyState
+            }
+        }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 20) {
+            ZStack {
+                Circle().fill(Color.incSageBg).frame(width: 80, height: 80)
+                Image(systemName: "chart.bar")
+                    .font(.system(size: 32, weight: .light))
+                    .foregroundColor(.incSage)
+            }
+            Text("No results yet")
+                .font(.system(size: 26, weight: .semibold))
+                .foregroundColor(.incText)
+            Text("Run a calculation to see your earnings breakdown.")
+                .font(.system(size: 14))
+                .foregroundColor(.incTextDim)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+            Button(action: onAdjust) {
+                Text("Open Calculator")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 22).padding(.vertical, 13)
+                    .background(RoundedRectangle(cornerRadius: 14).fill(Color.incSage))
+                    .shadow(color: Color.incSage.opacity(0.3), radius: 8, x: 0, y: 2)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.incBg.ignoresSafeArea())
+    }
+}

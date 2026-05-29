@@ -1,0 +1,108 @@
+//
+//  
+//  CalculatorTab.swift
+//  incomatic
+//
+//  Created by Ben Makusha on 05/28/2026
+//
+//  Orchestrator for the four-section form. Owns CalculatorState (the @Observable
+//  source of truth) and the SalaryCalculatorService used to load US states.
+//
+
+import SwiftUI
+
+struct CalculatorTab: View {
+    @ObservedObject var locationManager: LocationManager
+    @ObservedObject var viewModel: SalaryCalculatorViewModel
+    @State private var state = CalculatorState()
+
+    private let service = SalaryCalculatorService()
+
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            Color.incBg.ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: 0) {
+                    IncTopBar()
+                    SectionStepIndicator(active: $state.activeSection)
+                        .padding(.horizontal, 22)
+                    pageHeadline
+
+                    VStack(spacing: 0) {
+                        switch state.activeSection {
+                        case .earnings: EarningsSection(state: state)
+                        case .federal:  FederalSection(state: state)
+                        case .state:    StateSection(state: state)
+                        case .benefits: BenefitsSection(state: state)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 230)   // leave room for sticky CTA + tab bar
+                    .id(state.activeSection)  // re-mount for animation
+                    .transition(.opacity.combined(with: .offset(y: 8)))
+                }
+            }
+            .scrollDismissesKeyboard(.interactively)
+
+            let preview = livePreview(state: state)
+            StickyProgressCTA(
+                activeSection: $state.activeSection,
+                isLoading: viewModel.isLoading,
+                canCalculate: state.canCalculate,
+                payFrequency: state.payFrequency,
+                projectedPerPeriod: preview.perPeriod,
+                projectedPct: preview.pctOfGross,
+                onCalculate: triggerCalculation
+            )
+            .padding(.bottom, 8)
+        }
+        .animation(.easeInOut(duration: 0.35), value: state.activeSection)
+        .task { await loadStatesFromApi() }
+        .onChange(of: locationManager.state) { _, newState in
+            if let match = state.statesList.first(where: { $0.name == newState }) {
+                state.selectedStateCode = match.code
+            }
+        }
+    }
+
+    private var pageHeadline: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Define your\nfinancial horizon")
+                .font(.system(size: 36, weight: .bold))
+                .foregroundColor(.incText)
+                .kerning(-1)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 24)
+            Text("Enter your earnings and deductions to project your take-home pay.")
+                .font(.system(size: 14))
+                .foregroundColor(.incTextDim)
+                .lineSpacing(3)
+                .frame(maxWidth: 280, alignment: .leading)
+                .padding(.top, 4)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 22)
+        .padding(.bottom, 16)
+    }
+
+    private func loadStatesFromApi() async {
+        do {
+            state.statesList = try await service.fetchUSStates()
+        } catch {
+            state.statesList = fallbackStates
+        }
+    }
+
+    private func triggerCalculation() {
+        let built = buildCalculationRequest(state: state)
+        Task {
+            await viewModel.calculateSalary(
+                request: built.request,
+                baseSalaryAnnual: built.baseAnnual,
+                bonusAnnual: built.bonusAnnual,
+                benefits: built.benefits
+            )
+        }
+    }
+}

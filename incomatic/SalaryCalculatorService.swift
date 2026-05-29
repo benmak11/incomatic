@@ -95,6 +95,13 @@ struct PreTaxDeductions: Codable {
     let vision: Double?
     let healthcareFsa: Double?
     let dependentCareFsa: Double?
+    /// Named custom deductions; each becomes its own line item in the response.
+    let customDeductions: [NamedDeduction]?
+}
+
+struct NamedDeduction: Codable {
+    let name: String
+    let amount: Double
 }
 
 struct PostTaxDeductions: Codable {
@@ -109,6 +116,10 @@ struct PostTaxDeductions: Codable {
 struct SalaryCalculationResponse: Codable {
     let calculationId: String
     let grossPerCadence: Double
+    /// Authoritative base-salary slice of gross per cadence (server-truth).
+    let baseSalaryPerCadence: Double?
+    /// Authoritative bonus slice of gross per cadence (server-truth).
+    let bonusPerCadence: Double?
     let netPerCadence: Double
     let currency: String
     let rulePackVersion: String
@@ -171,12 +182,10 @@ struct BenefitsBreakdown {
 struct Taxes {
     let federal: TaxBreakdown?
     let stateTax: TaxBreakdown?
-    let local: TaxBreakdown?
     /// Social Security + Medicare combined for the FICA display row.
     let ficaCombined: Double
     let socialSecurity: TaxBreakdown?
     let medicare: TaxBreakdown?
-    let additionalMedicare: TaxBreakdown?
     let totalTaxes: Double
     let effectiveTaxRate: Double
 }
@@ -317,10 +326,8 @@ class SalaryCalculatorService {
 
         var federalTax: TaxBreakdown?
         var stateTax: TaxBreakdown?
-        var localTax: TaxBreakdown?
         var socialSecurity: TaxBreakdown?
         var medicare: TaxBreakdown?
-        var additionalMedicare: TaxBreakdown?
         var pension401k: Double = 0
         var totalTaxes: Double = 0
 
@@ -332,14 +339,8 @@ class SalaryCalculatorService {
             } else if name.contains("State Income Tax") {
                 stateTax = TaxBreakdown(amount: item.amount, rate: nil, description: name)
                 totalTaxes += item.amount
-            } else if name.contains("Local") && name.contains("Tax") {
-                localTax = TaxBreakdown(amount: item.amount, rate: nil, description: name)
-                totalTaxes += item.amount
-            } else if name.contains("Social Security") || name.contains("FICA (Social Security)") {
+            } else if name.contains("Social Security") {
                 socialSecurity = TaxBreakdown(amount: item.amount, rate: 6.2, description: "Social Security")
-                totalTaxes += item.amount
-            } else if name.contains("Additional Medicare") {
-                additionalMedicare = TaxBreakdown(amount: item.amount, rate: 0.9, description: "Additional Medicare")
                 totalTaxes += item.amount
             } else if name.contains("Medicare") {
                 medicare = TaxBreakdown(amount: item.amount, rate: 1.45, description: "Medicare")
@@ -349,9 +350,7 @@ class SalaryCalculatorService {
             }
         }
 
-        let ficaCombined = (socialSecurity?.amount ?? 0)
-            + (medicare?.amount ?? 0)
-            + (additionalMedicare?.amount ?? 0)
+        let ficaCombined = (socialSecurity?.amount ?? 0) + (medicare?.amount ?? 0)
 
         let effectiveTaxRate = annualGross > 0
             ? (totalTaxes * periodsPerYear / annualGross) * 100
@@ -359,8 +358,8 @@ class SalaryCalculatorService {
 
         return ViewFriendlyResponse(
             grossPay: GrossPayDetails(
-                baseSalaryPerPeriod: baseSalaryAnnual / periodsPerYear,
-                bonusPerPeriod: bonusAnnual / periodsPerYear,
+                baseSalaryPerPeriod: apiResponse.baseSalaryPerCadence ?? (baseSalaryAnnual / periodsPerYear),
+                bonusPerPeriod: apiResponse.bonusPerCadence ?? (bonusAnnual / periodsPerYear),
                 totalPerPeriod: apiResponse.grossPerCadence,
                 annualTotal: annualGross,
                 payFrequency: displayCadence
@@ -368,11 +367,9 @@ class SalaryCalculatorService {
             taxes: Taxes(
                 federal: federalTax,
                 stateTax: stateTax,
-                local: localTax,
                 ficaCombined: ficaCombined,
                 socialSecurity: socialSecurity,
                 medicare: medicare,
-                additionalMedicare: additionalMedicare,
                 totalTaxes: totalTaxes,
                 effectiveTaxRate: effectiveTaxRate
             ),
