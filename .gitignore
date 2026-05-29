@@ -1,2 +1,17 @@
 # Context
 CLAUDE.md
+
+# Secrets — do not commit
+Config/Secrets.xcconfig
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+
+# Build artifacts
+build/
+DerivedData/
+
+# macOS
+.DS_Store

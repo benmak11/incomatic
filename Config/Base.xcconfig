@@ -1,0 +1,16 @@
+// Base.xcconfig — committed default configuration.
+// This is the build's base configuration reference. It supplies a
+// placeholder API URL so fresh clones (and CI) build without manual
+// setup, and conditionally includes Secrets.xcconfig so a local,
+// gitignored override wins when present.
+//
+// To override locally, create Config/Secrets.xcconfig and set the
+// real values there:
+//   echo 'API_BASE_URL_PROD = https:/$()/your-real-host' > Config/Secrets.xcconfig
+//
+// xcconfig parses "//" as a line comment, so URL schemes need the
+// $() escape trick to keep the slashes literal at build time.
+
+API_BASE_URL_PROD = https:/$()/your-cloud-run-url.a.run.app
+
+#include? "Secrets.xcconfig"

@@ -205,7 +205,7 @@ struct NetPay {
 // MARK: - Service
 
 class SalaryCalculatorService {
-    private let baseURL = "http://localhost:8080"
+    private var baseURL: String { AppConfig.apiBaseURL }
 
     enum APIError: LocalizedError {
         case invalidURL
