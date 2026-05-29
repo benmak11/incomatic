@@ -58,6 +58,7 @@ struct IncCard<Content: View>: View {
 
 struct CustomDeduction: Identifiable {
     var id = UUID()
+    var name: String = ""
     var amount: String = ""
 }
 
@@ -679,8 +680,10 @@ struct CalculatorTab: View {
                 }
                 ForEach($customDeductions) { $deduction in
                     HStack(spacing: 10) {
-                        Text("Annual").font(.system(size: 13)).foregroundColor(.incTextDim)
-                        Spacer()
+                        TextField("Name", text: $deduction.name)
+                            .font(.system(size: 13))
+                            .padding(.horizontal, 10).padding(.vertical, 8)
+                            .background(Color.incSageBg).cornerRadius(10)
                         HStack(spacing: 4) {
                             Text("$").foregroundColor(.incTextMute).font(.system(size: 13))
                             TextField("0.00", text: $deduction.amount)
@@ -757,17 +760,25 @@ struct CalculatorTab: View {
         let fsaAnnual = annual(healthcareFsaPerPeriod)
         let dcaAnnual = annual(dependentCareFsaPerPeriod)
         let hsaAnnual = annual(hsaPerPeriod)
-        let customAnnual = customDeductions.compactMap { Double($0.amount) }.reduce(0, +)
+        let namedCustomDeductions: [NamedDeduction] = customDeductions
+            .enumerated()
+            .compactMap { idx, deduction in
+                guard let amt = Double(deduction.amount), amt > 0 else { return nil }
+                let trimmed = deduction.name.trimmingCharacters(in: .whitespacesAndNewlines)
+                let label = trimmed.isEmpty ? "Custom Deduction \(idx + 1)" : trimmed
+                return NamedDeduction(name: label, amount: amt)
+            }
 
         let pretax = PreTaxDeductions(
             pensionPercent: traditional401kPercent > 0 ? traditional401kPercent / 100.0 : nil,
-            fixed: customAnnual > 0 ? customAnnual : nil,
+            fixed: nil,
             hsa: hsaAnnual,
             medical: medAnnual,
             dental: dentAnnual,
             vision: visAnnual,
             healthcareFsa: fsaAnnual,
-            dependentCareFsa: dcaAnnual
+            dependentCareFsa: dcaAnnual,
+            customDeductions: namedCustomDeductions.isEmpty ? nil : namedCustomDeductions
         )
 
         let posttax = PostTaxDeductions(
