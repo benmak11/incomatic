@@ -57,7 +57,7 @@ struct LaunchView: View {
                 .scaleEffect(markScale)
                 .offset(x: markShift)
 
-                Text("incomatic")
+                Text("Incomatic")
                     .font(.system(size: 30, weight: .bold))
                     .kerning(-0.6)
                     .foregroundColor(.launchInk)
@@ -107,7 +107,7 @@ struct LaunchView: View {
 // MARK: - Host wrapper
 //
 // Drop this in place of `ContentView()` inside the WindowGroup, or use
-// the updated `incomaticApp.swift` provided in this handoff.
+// the updated `IncomaticApp.swift` provided in this handoff.
 
 struct RootView: View {
     @State private var showLaunch = true
