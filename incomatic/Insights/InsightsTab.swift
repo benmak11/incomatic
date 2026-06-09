@@ -1,5 +1,5 @@
 //
-//  
+//
 //  InsightsTab.swift
 //  incomatic
 //
@@ -15,20 +15,29 @@ struct InsightsTab: View {
     let isLoading: Bool
     let errorMessage: String?
     let onAdjust: () -> Void
+    let isSignedIn: Bool
+    let onShowAccount: () -> Void
 
     var body: some View {
-        Group {
-            if isLoading {
-                VStack(spacing: 16) {
-                    ProgressView().tint(.incSage)
-                    Text("Calculating…").font(.system(size: 14)).foregroundColor(.incTextDim)
+        ZStack(alignment: .bottom) {
+            Group {
+                if isLoading {
+                    VStack(spacing: 16) {
+                        ProgressView().tint(.incSage)
+                        Text("Calculating…").font(.system(size: 14)).foregroundColor(.incTextDim)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.incBg.ignoresSafeArea())
+                } else if let result = result {
+                    EarningsBreakdownView(result: result, onAdjust: onAdjust)
+                } else {
+                    emptyState
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.incBg.ignoresSafeArea())
-            } else if let result = result {
-                EarningsBreakdownView(result: result, onAdjust: onAdjust)
-            } else {
-                emptyState
+            }
+
+            if result != nil, !isSignedIn {
+                SaveBanner(isVisible: .constant(true), onSignIn: onShowAccount)
+                    .padding(.bottom, 92)
             }
         }
     }

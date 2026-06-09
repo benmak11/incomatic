@@ -2,6 +2,9 @@
 //  AppConfig.swift
 //  incomatic
 //
+//
+//  Created by Ben Makusha on 05/28/2026
+//
 //  Single source of truth for runtime configuration values that vary
 //  between environments. Production values are injected at build time
 //  via Config/Secrets.xcconfig → INFOPLIST_KEY_APIBaseURLProd.
