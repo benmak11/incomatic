@@ -10,11 +10,15 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct CalculatorTab: View {
     @ObservedObject var locationManager: LocationManager
     @ObservedObject var viewModel: SalaryCalculatorViewModel
+    @ObservedObject var accountManager: AccountManager
+    let onShowAccount: () -> Void
     @State private var state = CalculatorState()
+    @State private var ctaVisible = false
 
     private let service = SalaryCalculatorService()
 
@@ -24,7 +28,13 @@ struct CalculatorTab: View {
 
             ScrollView {
                 VStack(spacing: 0) {
-                    IncTopBar()
+                    IncTopBar {
+                        AccountGlyph(
+                            signedIn: accountManager.isSignedIn,
+                            user: accountManager.currentUser,
+                            action: onShowAccount
+                        )
+                    }
                     SectionStepIndicator(active: $state.activeSection)
                         .padding(.horizontal, 22)
                     pageHeadline
@@ -38,24 +48,56 @@ struct CalculatorTab: View {
                         }
                     }
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 230)   // leave room for sticky CTA + tab bar
+                    .padding(.bottom, 120)   // tab-bar clearance; CTA only renders on demand
                     .id(state.activeSection)  // re-mount for animation
                     .transition(.opacity.combined(with: .offset(y: 8)))
                 }
             }
             .scrollDismissesKeyboard(.interactively)
+            .toolbar {
+                // .decimalPad has no return key. Add a Done button above the keypad
+                // so users can dismiss it after entering amounts. Applies to every
+                // numeric field in every section because the ScrollView wraps them all.
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        UIApplication.shared.sendAction(
+                            #selector(UIResponder.resignFirstResponder),
+                            to: nil, from: nil, for: nil
+                        )
+                    }
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Color.incText)
+                }
+            }
+            .onScrollGeometryChange(for: Bool.self) { geometry in
+                // Surface the CTA when the user has scrolled to (or near) the bottom
+                // of the section. 60pt threshold so it appears just before the very
+                // last row, not only at the exact pixel-bottom.
+                let bottomEdge = geometry.contentOffset.y + geometry.containerSize.height
+                let threshold: CGFloat = 60
+                return bottomEdge >= geometry.contentSize.height - threshold
+            } action: { _, atBottom in
+                guard ctaVisible != atBottom else { return }
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                    ctaVisible = atBottom
+                }
+            }
 
-            let preview = livePreview(state: state)
-            StickyProgressCTA(
-                activeSection: $state.activeSection,
-                isLoading: viewModel.isLoading,
-                canCalculate: state.canCalculate,
-                payFrequency: state.payFrequency,
-                projectedPerPeriod: preview.perPeriod,
-                projectedPct: preview.pctOfGross,
-                onCalculate: triggerCalculation
-            )
-            .padding(.bottom, 8)
+            if ctaVisible {
+                let preview = livePreview(state: state)
+                StickyProgressCTA(
+                    activeSection: $state.activeSection,
+                    isLoading: viewModel.isLoading,
+                    canCalculate: state.canCalculate,
+                    payFrequency: state.payFrequency,
+                    projectedPerPeriod: preview.perPeriod,
+                    projectedPct: preview.pctOfGross,
+                    onCalculate: triggerCalculation
+                )
+                .padding(.bottom, 8)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
         .animation(.easeInOut(duration: 0.35), value: state.activeSection)
         .task { await loadStatesFromApi() }

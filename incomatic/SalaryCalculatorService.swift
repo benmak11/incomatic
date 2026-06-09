@@ -207,6 +207,10 @@ struct NetPay {
 class SalaryCalculatorService {
     private var baseURL: String { AppConfig.apiBaseURL }
 
+    /// Closure invoked on every request to fetch the current session token, if any.
+    /// Injected so the service stays decoupled from the AccountManager type.
+    var sessionTokenProvider: () -> String? = { nil }
+
     enum APIError: LocalizedError {
         case invalidURL
         case networkError(Error)
@@ -255,6 +259,9 @@ class SalaryCalculatorService {
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let token = sessionTokenProvider(), !token.isEmpty {
+            urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
 
         do {
             urlRequest.httpBody = try JSONEncoder().encode(request)

@@ -1,5 +1,5 @@
 //
-//  
+//
 //  IncTopBar.swift
 //  incomatic
 //
@@ -8,7 +8,9 @@
 
 import SwiftUI
 
-struct IncTopBar: View {
+struct IncTopBar<Trailing: View>: View {
+    @ViewBuilder var trailing: () -> Trailing
+
     var body: some View {
         HStack(spacing: 10) {
             ZStack {
@@ -26,9 +28,16 @@ struct IncTopBar: View {
                 .foregroundColor(.incText)
                 .kerning(-0.4)
             Spacer()
+            trailing()
         }
         .padding(.horizontal, 22)
         .padding(.top, 8)
         .padding(.bottom, 16)
+    }
+}
+
+extension IncTopBar where Trailing == EmptyView {
+    init() {
+        self.init(trailing: { EmptyView() })
     }
 }

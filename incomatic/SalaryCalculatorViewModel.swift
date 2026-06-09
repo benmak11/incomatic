@@ -18,6 +18,12 @@ class SalaryCalculatorViewModel: ObservableObject {
 
     private let service = SalaryCalculatorService()
 
+    /// Wire the AccountManager to the service so calculate calls get a Bearer header
+    /// when the user is signed in. Called once at app startup from the ContentView.
+    func attach(accountManager: AccountManager) {
+        service.sessionTokenProvider = { [weak accountManager] in accountManager?.sessionToken }
+    }
+
     func calculateSalary(
         request: SalaryCalculationRequest,
         baseSalaryAnnual: Double,
