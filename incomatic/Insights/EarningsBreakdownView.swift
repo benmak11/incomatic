@@ -14,6 +14,8 @@ import SwiftUI
 struct EarningsBreakdownView: View {
     let result: ViewFriendlyResponse
     let onAdjust: () -> Void
+    var bottomInset: CGFloat = 32
+    var onAtBottomChange: (Bool) -> Void = { _ in }
     @State private var showPDFAlert = false
 
     // Sage palette donut
@@ -30,9 +32,17 @@ struct EarningsBreakdownView: View {
                 itemizedSummaryCard
                 actionButtons
             }
-            .padding(.bottom, 32)
+            .padding(.bottom, bottomInset)
         }
         .background(Color.incBg.ignoresSafeArea())
+        .onScrollGeometryChange(for: Bool.self) { geo in
+            let scrollable = geo.contentSize.height - geo.containerSize.height
+            guard scrollable > 0 else { return false }
+            let offsetY = geo.contentOffset.y + geo.contentInsets.top
+            return offsetY >= scrollable - 24   // 24pt tolerance absorbs bounce/fractional offsets
+        } action: { _, atBottom in
+            onAtBottomChange(atBottom)
+        }
         .refreshable {
             // Hook for future GET /v1/calculations/{id}/refresh once implemented.
             try? await Task.sleep(nanoseconds: 700_000_000)
@@ -98,6 +108,9 @@ struct EarningsBreakdownView: View {
                 }
 
                 Text("\(String(format: "%.1f", result.netPay.takeHomePercentage))% of gross is yours per \(result.grossPay.payFrequency) paycheck")
+                    .font(.system(size: 12.5)).foregroundColor(.incTextDim)
+                    .multilineTextAlignment(.center)
+                Text("NOTE: This is just an estimate. Actual take-home pay may vary.")
                     .font(.system(size: 12.5)).foregroundColor(.incTextDim)
                     .multilineTextAlignment(.center)
             }

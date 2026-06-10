@@ -20,12 +20,18 @@ struct StickyProgressCTA: View {
     let projectedPerPeriod: Double?
     let projectedPct: Double?
     let onCalculate: () -> Void
+    let scrollProgress: CGFloat
 
     private var idx: Int { CalculatorSection.allCases.firstIndex(of: activeSection) ?? 0 }
     private var isLast: Bool { idx == CalculatorSection.allCases.count - 1 }
     private var nextSection: CalculatorSection? {
         let all = CalculatorSection.allCases
         return idx + 1 < all.count ? all[idx + 1] : nil
+    }
+    
+    private var pillOpacity: CGFloat {
+        let minOpacity: CGFloat = 0.45
+        return minOpacity + (1 - minOpacity) * scrollProgress
     }
 
     var body: some View {
@@ -69,6 +75,7 @@ struct StickyProgressCTA: View {
         .padding(.horizontal, 16).padding(.vertical, 12)
         .background(Color.incSageBg)
         .overlay(Rectangle().fill(Color.incHairline).frame(height: 1), alignment: .bottom)
+        .opacity(pillOpacity)   // projection ribbon fades with scroll; buttons stay opaque
     }
 
     private var buttonRow: some View {

@@ -51,6 +51,7 @@ struct ContentView: View {
             .tag(2)
         }
         .accentColor(.incSage)
+        .tabBarMinimizeOnScrollDown()
         .overlay(alignment: .bottom) {
             if let toastMessage {
                 SavedToast(text: toastMessage)
@@ -95,6 +96,19 @@ struct ContentView: View {
         Task {
             try? await Task.sleep(nanoseconds: 2_400_000_000)
             withAnimation(.easeIn(duration: 0.25)) { toastMessage = nil }
+        }
+    }
+}
+
+private extension View {
+    // iOS 26's native Instagram-style minimizing tab bar. App deploys to 18.6,
+    // so this is a no-op on iOS 18–25 (the tab bar just stays full-size there).
+    @ViewBuilder
+    func tabBarMinimizeOnScrollDown() -> some View {
+        if #available(iOS 26.0, *) {
+            self.tabBarMinimizeBehavior(.onScrollDown)
+        } else {
+            self
         }
     }
 }

@@ -59,6 +59,11 @@ struct SaveBanner: View {
                 RoundedRectangle(cornerRadius: 18).strokeBorder(Color.incHairline, lineWidth: 1)
             )
             .padding(.horizontal, 14)
+            // The pop: slide up from the below the safe area + fade, with a bouncy spring
+            .offset(y: isVisible ? 0 : 140)
+            .opacity(isVisible ? 1 : 0)
+            .animation(.spring(response: 0.45, dampingFraction: 0.72), value: isVisible)
+            .allowsHitTesting(isVisible)
         }
         .offset(x: dragOffset)
         .gesture(
@@ -83,6 +88,9 @@ struct SaveBanner: View {
                 }
         )
         .animation(.easeInOut(duration: 0.2), value: dragOffset)
+        .onChange(of: isVisible) { _, visible in
+            if visible { dragOffset = 0 }   // re-center after a swipe-dismiss so re-reveal lands in place
+        }
         .transition(.move(edge: .top).combined(with: .opacity))
     }
 }
