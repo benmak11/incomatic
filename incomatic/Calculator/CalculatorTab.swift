@@ -19,6 +19,7 @@ struct CalculatorTab: View {
     let onShowAccount: () -> Void
     @State private var state = CalculatorState()
     @State private var keyboardVisible = false
+    @State private var scrollProgress: CGFloat = 0   // 0 at top → 1 at bottom
 
     private let service = SalaryCalculatorService()
 
@@ -55,6 +56,16 @@ struct CalculatorTab: View {
                 }
             }
             .scrollDismissesKeyboard(.interactively)
+            .onScrollGeometryChange(for: CGFloat.self) { geo in
+                let scrollable = geo.contentSize.height - geo.containerSize.height
+                // Non-scrollable section = whole form already visible = fully revealed.
+                guard scrollable > 0 else { return 1 }
+                let offsetY = geo.contentOffset.y + geo.contentInsets.top
+                return min(max(offsetY / scrollable, 0), 1)
+            } action: { _, progress in
+                // No withAnimation: opacity must track the finger frame-by-frame.
+                scrollProgress = progress
+            }
             .toolbar {
                 // .decimalPad has no return key. Add a Done button above the keypad
                 // so users can dismiss it after entering amounts. Applies to every
@@ -89,7 +100,8 @@ struct CalculatorTab: View {
                     payFrequency: state.payFrequency,
                     projectedPerPeriod: preview.perPeriod,
                     projectedPct: preview.pctOfGross,
-                    onCalculate: triggerCalculation
+                    onCalculate: triggerCalculation,
+                    scrollProgress: scrollProgress
                 )
                 .padding(.bottom, 8)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -146,3 +158,4 @@ struct CalculatorTab: View {
         }
     }
 }
+

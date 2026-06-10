@@ -18,6 +18,18 @@ struct InsightsTab: View {
     let isSignedIn: Bool
     let onShowAccount: () -> Void
 
+    @State private var atBottom = false
+    @State private var bannerDismissed = false
+
+    // Banner is shown whenever we're at the bottom AND it hasn't been dismissed during
+    // this visit. Leaving the bottom re-arms it, so it pops again next time you return.
+    private var bannerBinding: Binding<Bool> {
+        Binding(
+            get: { atBottom && !bannerDismissed },
+            set: { shown in if !shown { bannerDismissed = true } }
+        )
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             Group {
@@ -29,16 +41,28 @@ struct InsightsTab: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color.incBg.ignoresSafeArea())
                 } else if let result = result {
-                    EarningsBreakdownView(result: result, onAdjust: onAdjust)
+                    EarningsBreakdownView(
+                        result: result,
+                        onAdjust: onAdjust,
+                        bottomInset: isSignedIn ? 32 : 120,   // clear the save banner + tab bar
+                        onAtBottomChange: { value in
+                            atBottom = value
+                            if !value { bannerDismissed = false }   // re-arm when leaving the bottom
+                        }
+                    )
                 } else {
                     emptyState
                 }
             }
 
             if result != nil, !isSignedIn {
-                SaveBanner(isVisible: .constant(true), onSignIn: onShowAccount)
-                    .padding(.bottom, 92)
+                SaveBanner(isVisible: bannerBinding, onSignIn: onShowAccount)
+                    .padding(.bottom, 24)
             }
+        }
+        // Reset bottom/dismiss tracking for each new calculation.
+        .onChange(of: isLoading) { _, loading in
+            if loading { atBottom = false; bannerDismissed = false }
         }
     }
 
