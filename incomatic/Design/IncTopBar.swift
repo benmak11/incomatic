@@ -23,7 +23,7 @@ struct IncTopBar<Trailing: View>: View {
                     .font(.system(size: 16, weight: .bold, design: .serif))
                     .foregroundColor(.white)
             }
-            Text("incomatic")
+            Text("Incomatic")
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.incText)
                 .kerning(-0.4)

@@ -48,9 +48,13 @@ struct FederalSection: View {
             IncCard {
                 VStack(alignment: .leading, spacing: 0) {
                     CalculatorFields.cardHeader(icon: "person.2.fill", title: "W-4 details")
-                    CalculatorFields.amountField(label: "Dependent amount",          text: $state.dependentsAmount)
-                    CalculatorFields.amountField(label: "Other income (annual)",     text: $state.otherIncome)
-                    CalculatorFields.amountField(label: "Deductions",                text: $state.itemizedDeductions)
+                    if state.useOldW4 {
+                        CalculatorFields.plainNumberField(label: "Allowances",            text: $state.allowances)
+                    } else {
+                        CalculatorFields.amountField(label: "Dependent amount",          text: $state.dependentsAmount)
+                        CalculatorFields.amountField(label: "Other income (annual)",     text: $state.otherIncome)
+                        CalculatorFields.amountField(label: "Deductions",                text: $state.itemizedDeductions)
+                    }
                     CalculatorFields.amountField(label: "Extra withholding / period", text: $state.additionalWithholding)
                 }
             }

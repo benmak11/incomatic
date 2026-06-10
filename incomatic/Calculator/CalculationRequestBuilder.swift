@@ -88,18 +88,22 @@ func buildCalculationRequest(state: CalculatorState) -> BuiltCalculationRequest 
         studentLoanPlan: nil
     )
 
+    let allowancesCount = max(0, Int(state.allowances) ?? 0)
+
     let w4HasData = (Double(state.dependentsAmount) ?? 0) > 0
         || (Double(state.otherIncome) ?? 0) > 0
         || (Double(state.itemizedDeductions) ?? 0) > 0
         || (Double(state.additionalWithholding) ?? 0) > 0
         || state.exemptFederal || state.exemptSocialSecurity || state.exemptMedicare
         || state.useOldW4 || state.nonresidentAlien
+    // On the pre-2020 W-4 the modern step-3/4 fields don't exist — send nil so they
+    // can't skew the legacy allowance-based calc.
     let w4: W4? = w4HasData ? W4(
         useOldW4: state.useOldW4 ? true : nil,
         nonresidentAlien: state.nonresidentAlien ? true : nil,
-        dependentsAmount: Double(state.dependentsAmount),
-        otherIncome: Double(state.otherIncome),
-        itemizedDeductions: Double(state.itemizedDeductions),
+        dependentsAmount: state.useOldW4 ? nil : Double(state.dependentsAmount),
+        otherIncome: state.useOldW4 ? nil : Double(state.otherIncome),
+        itemizedDeductions: state.useOldW4 ? nil : Double(state.itemizedDeductions),
         additionalWithholding: Double(state.additionalWithholding),
         exemptFederal: state.exemptFederal ? true : nil,
         exemptSocialSecurity: state.exemptSocialSecurity ? true : nil,
@@ -126,7 +130,7 @@ func buildCalculationRequest(state: CalculatorState) -> BuiltCalculationRequest 
             US: USOptions(
                 state: state.selectedStateCode,
                 filingStatus: state.filingStatus.apiValue,
-                allowances: nil,
+                allowances: state.useOldW4 ? allowancesCount : nil,
                 w4: w4
             ),
             UK: nil
