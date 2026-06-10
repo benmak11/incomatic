@@ -1,0 +1,40 @@
+name: iOS TestFlight
+
+on:
+  workflow_dispatch:        # manual run from the Actions tab
+  push:
+    tags: [ "v*" ]          # e.g. push tag v1.0.0
+
+jobs:
+  testflight:
+    name: Build and upload to TestFlight
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode version
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Materialize Secrets.xcconfig
+        # The committed Secrets.xcconfig is gitignored, so it is absent on CI. Without
+        # this, $(API_BASE_URL_PROD) resolves to empty and the build ships pointing at
+        # no backend. The SECRETS_XCCONFIG secret must hold the FULL file in the same
+        # format as Config/Secrets.xcconfig.example (note the $() escape on the URL).
+        run: |
+          mkdir -p Config
+          cat > Config/Secrets.xcconfig <<'EOF'
+          ${{ secrets.SECRETS_XCCONFIG }}
+          EOF
+
+      - name: Build & upload to TestFlight
+        env:
+          ASC_KEY_ID:                    ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID:                 ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8:                    ${{ secrets.ASC_KEY_P8 }}
+          MATCH_PASSWORD:                ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+        run: fastlane beta
