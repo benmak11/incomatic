@@ -18,7 +18,7 @@ struct CalculatorTab: View {
     @ObservedObject var accountManager: AccountManager
     let onShowAccount: () -> Void
     @State private var state = CalculatorState()
-    @State private var ctaVisible = false
+    @State private var keyboardVisible = false
 
     private let service = SalaryCalculatorService()
 
@@ -71,21 +71,16 @@ struct CalculatorTab: View {
                     .foregroundStyle(Color.incText)
                 }
             }
-            .onScrollGeometryChange(for: Bool.self) { geometry in
-                // Surface the CTA when the user has scrolled to (or near) the bottom
-                // of the section. 60pt threshold so it appears just before the very
-                // last row, not only at the exact pixel-bottom.
-                let bottomEdge = geometry.contentOffset.y + geometry.containerSize.height
-                let threshold: CGFloat = 60
-                return bottomEdge >= geometry.contentSize.height - threshold
-            } action: { _, atBottom in
-                guard ctaVisible != atBottom else { return }
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
-                    ctaVisible = atBottom
-                }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { keyboardVisible = true }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { keyboardVisible = false }
             }
 
-            if ctaVisible {
+            // Sticky CTA: always pinned above the tab bar; hidden only while the keyboard
+            // is up so it doesn't crowd the field being edited.
+            if !keyboardVisible {
                 let preview = livePreview(state: state)
                 StickyProgressCTA(
                     activeSection: $state.activeSection,
