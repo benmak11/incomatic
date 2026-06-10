@@ -21,7 +21,26 @@ platform :ios do
     increment_build_number(
       build_number: latest_testflight_build_number(app_identifier: APP_IDENTIFIER) + 1
     )
-    build_app(project: PROJECT, scheme: SCHEME, export_method: "app-store")
+    # The project uses automatic signing locally (for Xcode archives). On CI, force
+    # manual signing so gym uses the match-provided distribution profile instead of
+    # trying (and failing) to auto-generate one.
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path:                  PROJECT,
+      bundle_identifier:     APP_IDENTIFIER,
+      team_id:               "X8E58H8HK5",
+      code_sign_identity:    "Apple Distribution",
+      profile_name:          "match AppStore #{APP_IDENTIFIER}"
+    )
+    build_app(
+      project:       PROJECT,
+      scheme:        SCHEME,
+      export_method: "app-store",
+      export_options: {
+        signingStyle:         "manual",
+        provisioningProfiles: { APP_IDENTIFIER => "match AppStore #{APP_IDENTIFIER}" }
+      }
+    )
     upload_to_testflight(
       app_identifier:                    APP_IDENTIFIER,
       skip_waiting_for_build_processing: true,
