@@ -1,0 +1,4 @@
+git_url("https://github.com/benmak11/ios-signing")
+storage_mode("git")
+type("appstore")
+app_identifier(["com.makusha.incomatic"])

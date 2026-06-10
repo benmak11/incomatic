@@ -24,8 +24,6 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>We need your location to calculate accurate state and local taxes for your salary breakdown</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We need your location to calculate accurate state and local taxes for your salary breakdown</string>
 	<key>UIApplicationSceneManifest</key>
