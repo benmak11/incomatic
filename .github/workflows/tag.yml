@@ -1,0 +1,27 @@
+name: Auto Tag
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    name: Create version tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so the action can find the previous tag
+
+      - name: Create tag
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          # PAT (NOT the default GITHUB_TOKEN) so the pushed tag triggers
+          # ios-testflight.yml. Tags pushed with GITHUB_TOKEN do not start
+          # other workflows. The PAT needs Contents: Read and write on this repo.
+          github_token: ${{ secrets.TAG_PAT }}
+          default_bump: patch          # feat: -> minor, BREAKING CHANGE -> major
+          tag_prefix: v
