@@ -23,6 +23,7 @@ struct CalculatorTab: View {
     private let service = SalaryCalculatorService()
 
     var body: some View {
+      NavigationStack {
         ZStack(alignment: .bottom) {
             Color.incBg.ignoresSafeArea()
 
@@ -106,6 +107,8 @@ struct CalculatorTab: View {
                 state.selectedStateCode = match.code
             }
         }
+        .toolbar(.hidden, for: .navigationBar)
+      }
     }
 
     private var pageHeadline: some View {

@@ -33,6 +33,7 @@ final class CalculatorState {
     var useOldW4: Bool = false
     var nonresidentAlien: Bool = false
     var multipleJobs: Bool = false
+    var allowances: String = "0"          // pre-2020 W-4 only
     var dependentsAmount: String = ""
     var otherIncome: String = ""
     var itemizedDeductions: String = ""
