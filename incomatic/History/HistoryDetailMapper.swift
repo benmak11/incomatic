@@ -88,6 +88,7 @@ enum HistoryDetailMapper {
                 bonusPerPeriod: response.bonusPerCadence ?? (bonusAnnual / periodsPerYear),
                 totalPerPeriod: response.grossPerCadence,
                 annualTotal: annualGross,
+                annualBonus: bonusAnnual,
                 payFrequency: displayCadence
             ),
             taxes: Taxes(

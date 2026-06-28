@@ -168,6 +168,9 @@ struct GrossPayDetails {
     let bonusPerPeriod: Double
     let totalPerPeriod: Double
     let annualTotal: Double
+    /// Full annual bonus as a one-time lump sum (not spread per period).
+    /// Drives the standalone "one-time bonus" card on the Insights screen.
+    let annualBonus: Double
     let payFrequency: String
 }
 
@@ -369,6 +372,7 @@ class SalaryCalculatorService {
                 bonusPerPeriod: apiResponse.bonusPerCadence ?? (bonusAnnual / periodsPerYear),
                 totalPerPeriod: apiResponse.grossPerCadence,
                 annualTotal: annualGross,
+                annualBonus: bonusAnnual,
                 payFrequency: displayCadence
             ),
             taxes: Taxes(

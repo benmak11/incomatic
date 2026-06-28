@@ -38,7 +38,7 @@ enum CalculatorFields {
             fieldLabel(label.uppercased(), suffix: suffix)
             HStack(spacing: 8) {
                 Text("$").font(.system(size: 18, weight: .semibold)).foregroundColor(.incTextMute)
-                TextField(placeholder, text: text)
+                TextField(placeholder, text: currencyBinding(text))
                     .keyboardType(.decimalPad)
                     .font(.system(size: 22, weight: .semibold))
                     .foregroundColor(.incText)
@@ -57,14 +57,85 @@ enum CalculatorFields {
     ) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             fieldLabel(label.uppercased())
-            TextField(placeholder, text: text)
-                .keyboardType(.decimalPad)
+            TextField(placeholder, text: wholeNumberBinding(text))
+                .keyboardType(.numberPad)
                 .font(.system(size: 22, weight: .semibold))
                 .foregroundColor(.incText)
                 .padding(.bottom, 8)
                 .overlay(Rectangle().fill(Color.incHairline).frame(height: 2), alignment: .bottom)
         }
         .padding(.bottom, 18)
+    }
+
+    // MARK: - Input sanitizing / formatting
+    //
+    // The underlying @Observable state always stores a RAW numeric string (no
+    // grouping separators) so `Double(state.x)` keeps working everywhere. These
+    // bindings reformat only the *displayed* text:
+    //   • currency  → digits + a single ".", max 2 decimals, live "1,234.56" grouping
+    //   • whole     → digits only (hours, allowances)
+
+    /// Display binding for `$`-prefixed currency fields. Stores raw (un-grouped),
+    /// shows thousands separators while typing.
+    static func currencyBinding(_ source: Binding<String>) -> Binding<String> {
+        Binding(
+            get: { groupCurrency(source.wrappedValue) },
+            set: { source.wrappedValue = sanitizeCurrency($0) }
+        )
+    }
+
+    /// Display binding for whole-number fields (hours, allowances).
+    static func wholeNumberBinding(_ source: Binding<String>) -> Binding<String> {
+        Binding(
+            get: { source.wrappedValue },
+            set: { source.wrappedValue = String($0.filter(\.isNumber)) }
+        )
+    }
+
+    /// Keep digits + at most one decimal point + at most 2 fractional digits.
+    /// Drops grouping commas and any other character so the result is `Double`-parseable.
+    static func sanitizeCurrency(_ input: String) -> String {
+        var result = ""
+        var sawDot = false
+        var decimals = 0
+        for ch in input {
+            if ch.isNumber {
+                if sawDot {
+                    guard decimals < 2 else { continue }
+                    decimals += 1
+                }
+                result.append(ch)
+            } else if ch == "." && !sawDot {
+                sawDot = true
+                result.append(ch)
+            }
+        }
+        return result
+    }
+
+    /// Add thousands separators to the integer part of an already-sanitized raw
+    /// string, preserving a trailing "." or partial decimals mid-typing.
+    static func groupCurrency(_ raw: String) -> String {
+        guard !raw.isEmpty else { return "" }
+        let dotIndex = raw.firstIndex(of: ".")
+        let intPart = String(dotIndex.map { raw[..<$0] } ?? Substring(raw))
+        let grouped = groupedInteger(intPart)
+        if let dotIndex {
+            return grouped + "." + raw[raw.index(after: dotIndex)...]
+        }
+        return grouped
+    }
+
+    private static let groupingFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.maximumFractionDigits = 0
+        return f
+    }()
+
+    private static func groupedInteger(_ digits: String) -> String {
+        guard !digits.isEmpty, let value = Int(digits) else { return digits }
+        return groupingFormatter.string(from: NSNumber(value: value)) ?? digits
     }
 
     static func radioRow<T: Equatable>(
