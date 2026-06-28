@@ -30,6 +30,9 @@ struct EarningsBreakdownView: View {
                 pageHeader
                 netPayHero
                 itemizedSummaryCard
+                if result.grossPay.annualBonus > 0 {
+                    bonusCard
+                }
                 actionButtons
             }
             .padding(.bottom, bottomInset)
@@ -117,6 +120,75 @@ struct EarningsBreakdownView: View {
             .frame(maxWidth: .infinity)
         }
         .padding(.horizontal, 16)
+    }
+
+    // ─ One-time bonus ────────────────────────────────────────
+    // Federal supplemental flat rate (22%) + FICA (6.2% SS + 1.45% Medicare).
+    // A standalone estimate of the lump-sum bonus paycheck, kept separate from
+    // the recurring paycheck above. Matches the backend's supplemental treatment;
+    // state supplemental tax is omitted (varies widely) so this is an estimate.
+    private static let bonusFederalRate = 0.22
+    private static let bonusFicaRate    = 0.0765
+
+    private var bonusGross: Double { result.grossPay.annualBonus }
+    private var bonusFederal: Double { bonusGross * Self.bonusFederalRate }
+    private var bonusFica: Double { bonusGross * Self.bonusFicaRate }
+    private var bonusNet: Double { max(0, bonusGross - bonusFederal - bonusFica) }
+
+    private var bonusCard: some View {
+        IncCard {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 10) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.incBlushBg)
+                            .frame(width: 34, height: 34)
+                        Image(systemName: "gift")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.incBlush)
+                    }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("One-time bonus")
+                            .font(.system(size: 15, weight: .bold)).foregroundColor(.incText)
+                        Text("Paid as a separate lump sum")
+                            .font(.system(size: 12)).foregroundColor(.incTextDim)
+                    }
+                    Spacer()
+                }
+                .padding(.bottom, 14)
+
+                bonusRow("Gross bonus", amount: bonusGross, emphasized: false)
+                divider
+                bonusRow("Federal (22% supplemental)", amount: -bonusFederal, emphasized: false)
+                bonusRow("FICA (7.65%)", amount: -bonusFica, emphasized: false)
+                Rectangle().fill(Color.incSageBg).frame(height: 2).padding(.vertical, 10)
+                HStack {
+                    Text("Net bonus").font(.system(size: 16, weight: .semibold)).foregroundColor(.incText)
+                    Spacer()
+                    Text(formatCurrency(bonusNet))
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.incSage)
+                        .monospacedDigit()
+                }
+
+                Text("Estimate. Bonuses are withheld at the 22% federal supplemental rate; state supplemental tax isn't included here.")
+                    .font(.system(size: 11.5)).foregroundColor(.incTextDim)
+                    .padding(.top, 10)
+            }
+        }
+        .padding(.horizontal, 16)
+    }
+
+    private func bonusRow(_ label: String, amount: Double, emphasized: Bool) -> some View {
+        HStack {
+            Text(label).font(.system(size: 13)).foregroundColor(.incTextDim)
+            Spacer()
+            Text(formatSigned(amount))
+                .font(.system(size: 13, weight: emphasized ? .bold : .regular))
+                .foregroundColor(.incText)
+                .monospacedDigit()
+        }
+        .padding(.vertical, 4)
     }
 
     private func legendDot(color: Color, label: String) -> some View {
