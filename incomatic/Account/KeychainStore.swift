@@ -13,7 +13,7 @@
 import Foundation
 import Security
 
-struct StoredSession: Codable {
+nonisolated struct StoredSession: Codable {
     let token: String
     let user: AccountUser
 }

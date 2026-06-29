@@ -11,7 +11,7 @@ import Foundation
 
 // MARK: - API Request Models
 
-struct SalaryCalculationRequest: Codable {
+nonisolated struct SalaryCalculationRequest: Codable {
     let country: String
     let taxYear: Int
     /// Legacy combined annual amount. When `earnings` is set, prefer that.
@@ -28,20 +28,20 @@ struct SalaryCalculationRequest: Codable {
     let countryOptions: CountryOptions
 }
 
-struct Earnings: Codable {
+nonisolated struct Earnings: Codable {
     let salary: SalaryRow?
     let hourly: HourlyRow?
     let bonus: Double?
     let commission: Double?
 }
 
-struct SalaryRow: Codable {
+nonisolated struct SalaryRow: Codable {
     let amount: Double
     /// "PER_YEAR" or "PER_PERIOD"
     let basis: String
 }
 
-struct HourlyRow: Codable {
+nonisolated struct HourlyRow: Codable {
     let rate: Double
     /// Hours per pay period (backend multiplies by periodsPerYear).
     let regularHours: Double?
@@ -51,19 +51,19 @@ struct HourlyRow: Codable {
     let doubleTimeMultiplier: Double?
 }
 
-struct CountryOptions: Codable {
+nonisolated struct CountryOptions: Codable {
     let US: USOptions?
     let UK: UKOptions?
 }
 
-struct USOptions: Codable {
+nonisolated struct USOptions: Codable {
     let state: String
     let filingStatus: String
     let allowances: Int?
     let w4: W4?
 }
 
-struct W4: Codable {
+nonisolated struct W4: Codable {
     let useOldW4: Bool?
     let nonresidentAlien: Bool?
     /// $2000 per qualifying child + $500 per other dependent.
@@ -79,13 +79,13 @@ struct W4: Codable {
     let exemptMedicare: Bool?
 }
 
-struct UKOptions: Codable {
+nonisolated struct UKOptions: Codable {
     let taxCode: String?
     let scottishResident: Bool?
     let niCategory: String?
 }
 
-struct PreTaxDeductions: Codable {
+nonisolated struct PreTaxDeductions: Codable {
     let pensionPercent: Double?
     /// Catch-all fixed annual amount (still supported for back-compat).
     let fixed: Double?
@@ -99,12 +99,12 @@ struct PreTaxDeductions: Codable {
     let customDeductions: [NamedDeduction]?
 }
 
-struct NamedDeduction: Codable {
+nonisolated struct NamedDeduction: Codable {
     let name: String
     let amount: Double
 }
 
-struct PostTaxDeductions: Codable {
+nonisolated struct PostTaxDeductions: Codable {
     let fixed: Double?
     /// Roth 401(k) percent of regular wages (0–1).
     let roth401kPercent: Double?
@@ -113,7 +113,7 @@ struct PostTaxDeductions: Codable {
 
 // MARK: - API Response Models
 
-struct SalaryCalculationResponse: Codable {
+nonisolated struct SalaryCalculationResponse: Codable {
     let calculationId: String
     let grossPerCadence: Double
     /// Authoritative base-salary slice of gross per cadence (server-truth).
@@ -127,7 +127,7 @@ struct SalaryCalculationResponse: Codable {
     let explanation: [ExplanationItem]
 }
 
-struct LineItem: Codable {
+nonisolated struct LineItem: Codable {
     let name: String
     let amount: Double
     /// EARNINGS, TAX_FEDERAL, TAX_FICA, TAX_STATE, PRE_TAX_BENEFIT, RETIREMENT, POST_TAX, NET.
@@ -135,7 +135,7 @@ struct LineItem: Codable {
     let category: String?
 }
 
-struct ExplanationItem: Codable {
+nonisolated struct ExplanationItem: Codable {
     let id: String
     let text: String
 }
@@ -143,7 +143,7 @@ struct ExplanationItem: Codable {
 // MARK: - Benefits Input
 // Not sent to the API as individual fields — combined into pretax.fixed.
 // Tracked locally so the results screen can display individual line items.
-struct BenefitsInput {
+nonisolated struct BenefitsInput {
     var medicalPremium: Double = 0       // Annual
     var dentalPremium: Double = 0        // Annual
     var lifeInsurancePremium: Double = 0 // Annual
@@ -151,7 +151,7 @@ struct BenefitsInput {
 
 // MARK: - View-Friendly Models
 
-struct ViewFriendlyResponse {
+nonisolated struct ViewFriendlyResponse {
     let grossPay: GrossPayDetails
     let taxes: Taxes
     let benefits: BenefitsBreakdown
@@ -163,7 +163,7 @@ struct ViewFriendlyResponse {
     let lineItems: [LineItem]
 }
 
-struct GrossPayDetails {
+nonisolated struct GrossPayDetails {
     let baseSalaryPerPeriod: Double
     let bonusPerPeriod: Double
     let totalPerPeriod: Double
@@ -174,7 +174,7 @@ struct GrossPayDetails {
     let payFrequency: String
 }
 
-struct BenefitsBreakdown {
+nonisolated struct BenefitsBreakdown {
     let medical: Double
     let dental: Double
     let retirement401k: Double
@@ -182,7 +182,7 @@ struct BenefitsBreakdown {
     var total: Double { medical + dental + retirement401k + lifeInsurance }
 }
 
-struct Taxes {
+nonisolated struct Taxes {
     let federal: TaxBreakdown?
     let stateTax: TaxBreakdown?
     /// Social Security + Medicare combined for the FICA display row.
@@ -193,13 +193,13 @@ struct Taxes {
     let effectiveTaxRate: Double
 }
 
-struct TaxBreakdown {
+nonisolated struct TaxBreakdown {
     let amount: Double
     let rate: Double?
     let description: String
 }
 
-struct NetPay {
+nonisolated struct NetPay {
     let perPayPeriod: Double
     let annual: Double
     let takeHomePercentage: Double

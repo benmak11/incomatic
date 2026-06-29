@@ -11,7 +11,7 @@
 
 import Foundation
 
-struct SavedCalculationSummary: Codable, Identifiable, Hashable {
+nonisolated struct SavedCalculationSummary: Codable, Identifiable, Hashable {
     let id: String
     let savedAt: String
     let country: String?
@@ -27,12 +27,12 @@ struct SavedCalculationSummary: Codable, Identifiable, Hashable {
     let takeHomePct: Double?
 }
 
-struct CalculationListResponse: Codable {
+nonisolated struct CalculationListResponse: Codable {
     let items: [SavedCalculationSummary]
     let nextCursor: String?
 }
 
-struct SavedCalculationDetail: Codable {
+nonisolated struct SavedCalculationDetail: Codable {
     let summary: SavedCalculationSummary
     let request: SalaryCalculationRequest
     let response: SalaryCalculationResponse
