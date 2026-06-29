@@ -42,10 +42,10 @@ struct SaveBanner: View {
                 Button(action: onSignIn) {
                     Text("Sign in")
                         .font(.system(size: 12.5, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.incBtnSolidText)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 9)
-                        .background(RoundedRectangle(cornerRadius: 11).fill(Color.incText))
+                        .background(RoundedRectangle(cornerRadius: 11).fill(Color.incBtnSolid))
                 }
             }
             .padding(.horizontal, 14)

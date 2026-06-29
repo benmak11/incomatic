@@ -74,7 +74,7 @@ struct AccountSheet: View {
             .frame(height: 52)
             .clipShape(RoundedRectangle(cornerRadius: 13))
             .overlay(
-                RoundedRectangle(cornerRadius: 13).strokeBorder(Color.black.opacity(0.14), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 13).strokeBorder(Color.incHairlineStrong, lineWidth: 1)
             )
             .disabled(accountManager.isSigningIn)
 

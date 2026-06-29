@@ -17,7 +17,7 @@ struct MiniDonut: View {
     let benefits: Double
     var size: CGFloat = 40
 
-    private let goldColor = Color(red: 0.894, green: 0.780, blue: 0.478) // #E4C77A — mirrors EarningsBreakdownView
+    private let goldColor = Color.incGold // mirrors EarningsBreakdownView
 
     var body: some View {
         let total = max(0.0001, takeHome + taxes + benefits)

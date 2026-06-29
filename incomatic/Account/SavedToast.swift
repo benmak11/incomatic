@@ -21,11 +21,11 @@ struct SavedToast: View {
                 .foregroundColor(.incSageSoft)
             Text(text)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(.incBtnSolidText)
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 11)
-        .background(Capsule().fill(Color.incText))
+        .background(Capsule().fill(Color.incBtnSolid))
         .shadow(color: Color.black.opacity(0.22), radius: 14, x: 0, y: 8)
         .transition(.opacity.combined(with: .move(edge: .bottom)))
     }

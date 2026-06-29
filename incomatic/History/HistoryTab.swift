@@ -116,7 +116,7 @@ struct HistoryTab: View {
             .clipShape(RoundedRectangle(cornerRadius: 13))
             .overlay(
                 RoundedRectangle(cornerRadius: 13)
-                    .strokeBorder(Color.black.opacity(0.14), lineWidth: 1)
+                    .strokeBorder(Color.incHairlineStrong, lineWidth: 1)
             )
 
             if let error = accountManager.errorMessage {

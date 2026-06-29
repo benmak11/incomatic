@@ -21,7 +21,7 @@ struct EarningsBreakdownView: View {
     // Sage palette donut
     private let takeHomeColor = Color.incSage
     private let taxesColor    = Color.incBlush
-    private let benefitsColor = Color(red: 0.894, green: 0.780, blue: 0.478) // #E4C77A
+    private let benefitsColor = Color.incGold
 
     var body: some View {
         ScrollView {
@@ -279,8 +279,8 @@ struct EarningsBreakdownView: View {
                     .font(.system(size: 14, weight: .bold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(RoundedRectangle(cornerRadius: 14).fill(Color.incText))
-                    .foregroundColor(.white)
+                    .background(RoundedRectangle(cornerRadius: 14).fill(Color.incBtnSolid))
+                    .foregroundColor(.incBtnSolidText)
             }
         }
         .padding(.horizontal, 16)

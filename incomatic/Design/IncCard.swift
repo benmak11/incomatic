@@ -16,6 +16,10 @@ struct IncCard<Content: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color.incSurface)
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .strokeBorder(Color.incCardBorder, lineWidth: 1)
+            )
             .shadow(color: Color.black.opacity(0.04), radius: 22, x: 0, y: 6)
             .shadow(color: Color.black.opacity(0.02), radius: 2, x: 0, y: 1)
     }
