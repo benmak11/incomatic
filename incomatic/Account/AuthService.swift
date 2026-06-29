@@ -10,18 +10,18 @@
 
 import Foundation
 
-struct AppleSignInRequestBody: Encodable {
+nonisolated struct AppleSignInRequestBody: Encodable {
     let identityToken: String
     let nonce: String
     let displayName: String?
 }
 
-struct AppleSignInResponseBody: Decodable {
+nonisolated struct AppleSignInResponseBody: Decodable {
     let sessionToken: String
     let expiresAt: String
     let user: User
 
-    struct User: Decodable {
+    nonisolated struct User: Decodable {
         let id: String
         let displayName: String?
     }

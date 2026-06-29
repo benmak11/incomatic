@@ -12,7 +12,7 @@
 
 import Foundation
 
-enum AppConfig {
+nonisolated enum AppConfig {
     /// Loopback URL used when running the salary-calculator backend locally.
     static let localBaseURL = "http://localhost:8080"
 

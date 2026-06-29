@@ -10,7 +10,7 @@
 
 import Foundation
 
-struct AccountUser: Codable, Equatable {
+nonisolated struct AccountUser: Codable, Equatable {
     let id: String
     let displayName: String?
 
