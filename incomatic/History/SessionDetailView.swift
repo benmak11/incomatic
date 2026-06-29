@@ -23,7 +23,7 @@ struct SessionDetailView: View {
 
     private let takeHomeColor = Color.incSage
     private let taxesColor    = Color.incBlush
-    private let benefitsColor = Color(red: 0.894, green: 0.780, blue: 0.478)
+    private let benefitsColor = Color.incGold
 
     var body: some View {
         ZStack {

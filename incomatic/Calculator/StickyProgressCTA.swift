@@ -119,7 +119,7 @@ struct StickyProgressCTA: View {
                 .padding(.vertical, 12)
                 .background(
                     RoundedRectangle(cornerRadius: 14)
-                        .fill(isLast && !canCalculate ? Color(red: 0.77, green: 0.80, blue: 0.79) : Color.incSage)
+                        .fill(isLast && !canCalculate ? Color.incDisabled : Color.incSage)
                 )
                 .shadow(
                     color: (isLast && !canCalculate) ? .clear : Color.incSage.opacity(0.3),
