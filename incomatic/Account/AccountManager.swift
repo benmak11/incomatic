@@ -20,6 +20,7 @@ final class AccountManager: ObservableObject {
     @Published private(set) var currentUser: AccountUser?
     @Published private(set) var sessionToken: String?
     @Published private(set) var isSigningIn = false
+    @Published private(set) var isDeletingAccount = false
     @Published var errorMessage: String?
 
     private let authService: AuthService
@@ -108,6 +109,24 @@ final class AccountManager: ObservableObject {
         sessionToken = nil
         currentUser = nil
         errorMessage = nil
+    }
+
+    /// Permanently deletes the account server-side (calculations + directory record),
+    /// then clears the local session. Returns true on success. Required by App Store
+    /// Guideline 5.1.1(v) for apps that create an account.
+    func deleteAccount() async -> Bool {
+        guard let token = sessionToken, !isDeletingAccount else { return false }
+        isDeletingAccount = true
+        errorMessage = nil
+        defer { isDeletingAccount = false }
+        do {
+            try await authService.deleteAccount(token: token)
+            signOut()   // wipes keychain + local session state
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
     }
 
     // MARK: - Crypto helpers
