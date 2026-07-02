@@ -82,5 +82,27 @@ nonisolated final class AuthService {
             throw AuthError.decoding(error)
         }
     }
+
+    /// Permanently deletes the signed-in user's account and saved calculations
+    /// (DELETE /v1/account). The backend returns 204 on success.
+    func deleteAccount(token: String) async throws {
+        guard let url = URL(string: "\(baseURL)/v1/account") else { throw AuthError.invalidURL }
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            throw AuthError.network(error)
+        }
+
+        guard let http = response as? HTTPURLResponse else { throw AuthError.invalidResponse }
+        guard (200...299).contains(http.statusCode) else {
+            let message = String(data: data, encoding: .utf8) ?? "Server returned \(http.statusCode)"
+            throw AuthError.server(http.statusCode, message)
+        }
+    }
 }
 

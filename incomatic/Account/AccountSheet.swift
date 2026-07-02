@@ -17,6 +17,7 @@ struct AccountSheet: View {
     @ObservedObject var accountManager: AccountManager
     let savedCount: Int
     let onClose: () -> Void
+    @State private var showDeleteConfirm = false
 
     var body: some View {
         Group {
@@ -178,6 +179,34 @@ struct AccountSheet: View {
                     .frame(height: 50)
                     .background(RoundedRectangle(cornerRadius: 13).fill(Color.incRed.opacity(0.12)))
             }
+
+            Button {
+                showDeleteConfirm = true
+            } label: {
+                Group {
+                    if accountManager.isDeletingAccount {
+                        ProgressView().tint(.incTextMute)
+                    } else {
+                        Text("Delete Account")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.incTextMute)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 40)
+            }
+            .padding(.top, 6)
+            .disabled(accountManager.isDeletingAccount)
+        }
+        .alert("Delete account?", isPresented: $showDeleteConfirm) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                Task {
+                    if await accountManager.deleteAccount() { onClose() }
+                }
+            }
+        } message: {
+            Text("This permanently deletes your account and every saved calculation. This can't be undone.")
         }
     }
 }
