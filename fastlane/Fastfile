@@ -21,6 +21,12 @@ platform :ios do
     increment_build_number(
       build_number: latest_testflight_build_number(app_identifier: APP_IDENTIFIER) + 1
     )
+    # On tag-triggered CI runs GITHUB_REF_NAME is the tag itself (e.g. "v1.4.1");
+    # stamp it as the marketing version so the App Store Connect version always
+    # matches the git tag. workflow_dispatch/local runs (GITHUB_REF_NAME = branch
+    # or unset) fail the format check and keep the project's own MARKETING_VERSION.
+    tag_version = ENV["GITHUB_REF_NAME"].to_s.delete_prefix("v")
+    version_xcargs = tag_version.match?(/\A\d+\.\d+\.\d+\z/) ? "MARKETING_VERSION=#{tag_version}" : ""
     # The project uses automatic signing locally (for Xcode archives). On CI, force
     # manual signing so gym uses the match-provided distribution profile instead of
     # trying (and failing) to auto-generate one.
@@ -36,6 +42,7 @@ platform :ios do
       project:       PROJECT,
       scheme:        SCHEME,
       export_method: "app-store",
+      xcargs:        version_xcargs,
       export_options: {
         signingStyle:         "manual",
         provisioningProfiles: { APP_IDENTIFIER => "match AppStore #{APP_IDENTIFIER}" }
