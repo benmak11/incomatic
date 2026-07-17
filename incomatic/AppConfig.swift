@@ -13,6 +13,10 @@
 import Foundation
 
 nonisolated enum AppConfig {
+    /// Tax year every calculation runs against. Single source of truth for the
+    /// request builder, the bonus payout-date captions, and the earnings outlook.
+    static let taxYear = 2025
+
     /// Loopback URL used when running the salary-calculator backend locally.
     static let localBaseURL = "http://localhost:8080"
 

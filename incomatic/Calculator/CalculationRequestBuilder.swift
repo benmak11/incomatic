@@ -40,12 +40,22 @@ func buildCalculationRequest(state: CalculatorState) -> BuiltCalculationRequest 
 
     let bonus = Double(state.bonusAmount) ?? 0
     let commission = Double(state.commissionAmount) ?? 0
+    let rsuVesting = state.effectiveRsuAnnual
 
-    let earnings: Earnings? = (salaryRow != nil || hourlyRow != nil || bonus > 0 || commission > 0)
+    func isoDate(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: date)
+    }
+
+    let earnings: Earnings? = (salaryRow != nil || hourlyRow != nil || bonus > 0 || commission > 0 || rsuVesting > 0)
         ? Earnings(
             salary: salaryRow,
             hourly: hourlyRow,
             bonus: bonus > 0 ? bonus : nil,
+            bonusDate: bonus > 0 ? state.bonusDate.map(isoDate) : nil,
+            bonusRecurring: (bonus > 0 && state.bonusRecurring) ? true : nil,
+            rsuVesting: rsuVesting > 0 ? rsuVesting : nil,
             commission: commission > 0 ? commission : nil
           )
         : nil
@@ -110,15 +120,11 @@ func buildCalculationRequest(state: CalculatorState) -> BuiltCalculationRequest 
         exemptMedicare: state.exemptMedicare ? true : nil
     ) : nil
 
-    let payDateString: String = {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        return f.string(from: state.payDate)
-    }()
+    let payDateString = isoDate(state.payDate)
 
     let request = SalaryCalculationRequest(
         country: "US",
-        taxYear: 2025,
+        taxYear: AppConfig.taxYear,
         annualSalary: nil,
         bonus: nil,
         earnings: earnings,

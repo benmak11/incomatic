@@ -16,8 +16,10 @@ struct CalculatorTab: View {
     @ObservedObject var locationManager: LocationManager
     @ObservedObject var viewModel: SalaryCalculatorViewModel
     @ObservedObject var accountManager: AccountManager
+    @ObservedObject var equityStore: EquityStore
     let onShowAccount: () -> Void
     @State private var state = CalculatorState()
+    @State private var showGrantsSheet = false
     @State private var keyboardVisible = false
     @State private var scrollProgress: CGFloat = 0   // 0 at top → 1 at bottom
 
@@ -43,7 +45,13 @@ struct CalculatorTab: View {
 
                     VStack(spacing: 0) {
                         switch state.activeSection {
-                        case .earnings: EarningsSection(state: state)
+                        case .earnings: EarningsSection(
+                            state: state,
+                            equity: equityStore,
+                            signedIn: accountManager.isSignedIn,
+                            onOpenGrants: { showGrantsSheet = true },
+                            onShowAccount: onShowAccount
+                        )
                         case .federal:  FederalSection(state: state)
                         case .state:    StateSection(state: state)
                         case .benefits: BenefitsSection(state: state)
@@ -93,6 +101,10 @@ struct CalculatorTab: View {
             // is up so it doesn't crowd the field being edited.
             if !keyboardVisible {
                 let preview = livePreview(state: state)
+                VStack(spacing: 8) {
+                if state.needsRecalculation && state.canCalculate {
+                    recalcNudge
+                }
                 StickyProgressCTA(
                     activeSection: $state.activeSection,
                     isLoading: viewModel.isLoading,
@@ -103,12 +115,28 @@ struct CalculatorTab: View {
                     onCalculate: triggerCalculation,
                     scrollProgress: scrollProgress
                 )
+                }
                 .padding(.bottom, 8)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .sheet(isPresented: $showGrantsSheet) {
+            GrantsSheet(store: equityStore, onChanged: syncGrantDerivedRsu)
+        }
         .animation(.easeInOut(duration: 0.35), value: state.activeSection)
         .task { await loadStatesFromApi() }
+        // ContentView owns loading/clearing the store; any grants change
+        // (initial load, sheet edits, sign-out) re-derives the vesting total.
+        .onReceive(equityStore.$grants) { _ in
+            syncGrantDerivedRsu()
+        }
+        // Bonus date/toggle edits that move it in or out of this year's paycheck
+        // stale the current result (§3) — same nudge as grant edits.
+        .onChange(of: state.bonusIncludedThisYear) {
+            if viewModel.calculationResult != nil {
+                state.needsRecalculation = true
+            }
+        }
         .onChange(of: locationManager.state) { _, newState in
             if let match = state.statesList.first(where: { $0.name == newState }) {
                 state.selectedStateCode = match.code
@@ -116,6 +144,35 @@ struct CalculatorTab: View {
         }
         .toolbar(.hidden, for: .navigationBar)
       }
+    }
+
+    /// Push the grant-derived vesting total into the calculator state; if it
+    /// changed after a result exists, surface the "Recalculate" nudge.
+    private func syncGrantDerivedRsu() {
+        let derived = equityStore.vestingThisYear
+        guard derived != state.grantDerivedRsuAnnual else { return }
+        state.grantDerivedRsuAnnual = derived
+        if viewModel.calculationResult != nil {
+            state.needsRecalculation = true
+        }
+    }
+
+    private var recalcNudge: some View {
+        Button(action: triggerCalculation) {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .font(.system(size: 12, weight: .bold))
+                Text("Inputs changed — recalculate to update your results")
+                    .font(.system(size: 12.5, weight: .semibold))
+            }
+            .foregroundColor(.incSageDeep)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 9)
+            .background(Capsule().fill(Color.incSageBg))
+            .overlay(Capsule().strokeBorder(Color.incSage.opacity(0.35), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
     private var pageHeadline: some View {
@@ -147,6 +204,7 @@ struct CalculatorTab: View {
     }
 
     private func triggerCalculation() {
+        state.needsRecalculation = false
         let built = buildCalculationRequest(state: state)
         Task {
             await viewModel.calculateSalary(

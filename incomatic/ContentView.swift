@@ -16,6 +16,7 @@ struct ContentView: View {
     @StateObject private var viewModel = SalaryCalculatorViewModel()
     @StateObject private var accountManager = AccountManager()
     @StateObject private var historyViewModel = HistoryViewModel()
+    @StateObject private var equityStore = EquityStore()
     @State private var selectedTab: Int = 0
     @State private var showingAccountSheet = false
     @State private var toastMessage: String?
@@ -26,6 +27,7 @@ struct ContentView: View {
                 locationManager: locationManager,
                 viewModel: viewModel,
                 accountManager: accountManager,
+                equityStore: equityStore,
                 onShowAccount: { showingAccountSheet = true }
             )
             .tabItem { Label("Calculator", systemImage: "doc.text") }
@@ -37,7 +39,8 @@ struct ContentView: View {
                 errorMessage: viewModel.errorMessage,
                 onAdjust: { selectedTab = 0 },
                 isSignedIn: accountManager.isSignedIn,
-                onShowAccount: { showingAccountSheet = true }
+                onShowAccount: { showingAccountSheet = true },
+                outlookGrants: equityStore.grants
             )
             .tabItem { Label("Insights", systemImage: "chart.bar") }
             .tag(1)
@@ -68,8 +71,12 @@ struct ContentView: View {
         .task {
             viewModel.attach(accountManager: accountManager)
             historyViewModel.attach(accountManager: accountManager)
+            equityStore.attach(accountManager: accountManager)
             accountManager.restoreSession()
-            if accountManager.isSignedIn { await historyViewModel.load() }
+            if accountManager.isSignedIn {
+                await historyViewModel.load()
+                await equityStore.load()
+            }
         }
         .onChange(of: viewModel.isLoading) { _, loading in
             if !loading && viewModel.calculationResult != nil {
@@ -84,9 +91,13 @@ struct ContentView: View {
         }
         .onChange(of: accountManager.isSignedIn) { _, signedIn in
             if signedIn {
-                Task { await historyViewModel.load() }
+                Task {
+                    await historyViewModel.load()
+                    await equityStore.load()
+                }
             } else {
                 historyViewModel.clearForSignOut()
+                equityStore.clear()
             }
         }
     }

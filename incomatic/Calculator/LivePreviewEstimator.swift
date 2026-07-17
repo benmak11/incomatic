@@ -23,11 +23,14 @@ func livePreview(state: CalculatorState) -> LivePreview {
         ((Double(state.regularHoursPerPeriod) ?? 0) +
          (Double(state.overtimeHoursPerPeriod) ?? 0) * 1.5) *
         state.payFrequency.periodsPerYear
-    let bonus = Double(state.bonusAmount) ?? 0
+    // Mirror the server's bonus inclusion rule: a bonus dated outside the tax year
+    // (one-time) or starting in a future year (recurring) isn't in this year's pay.
+    let bonus = state.bonusIncludedThisYear ? (Double(state.bonusAmount) ?? 0) : 0
     let comm  = Double(state.commissionAmount) ?? 0
+    let rsu   = state.effectiveRsuAnnual
     let annualGross = (state.incomeType == .salary
         ? (state.salaryBasis == .perYear ? salary : salary * state.payFrequency.periodsPerYear)
-        : hourly) + bonus + comm
+        : hourly) + bonus + comm + rsu
     guard annualGross > 0 else { return LivePreview(perPeriod: nil, pctOfGross: nil) }
 
     let periods = state.payFrequency.periodsPerYear
@@ -68,7 +71,7 @@ func livePreview(state: CalculatorState) -> LivePreview {
     let perPeriod = net / periods
 
     // Pct of gross uses the same definition the old code did (salary + bonus + commission, no hourly)
-    let annualForPct = (state.salaryBasis == .perYear ? salary : salary * periods) + bonus + comm
+    let annualForPct = (state.salaryBasis == .perYear ? salary : salary * periods) + bonus + comm + rsu
     let grossPerPeriod = annualForPct > 0 ? annualForPct / periods : 0
     let pct: Double? = grossPerPeriod > 0 ? (perPeriod / grossPerPeriod) * 100 : nil
 
