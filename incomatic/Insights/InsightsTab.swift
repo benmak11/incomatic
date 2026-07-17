@@ -17,6 +17,8 @@ struct InsightsTab: View {
     let onAdjust: () -> Void
     let isSignedIn: Bool
     let onShowAccount: () -> Void
+    /// Saved grants for the yearly outlook's future-vest segments.
+    var outlookGrants: [RsuGrant] = []
 
     @State private var atBottom = false
     @State private var bannerDismissed = false
@@ -44,6 +46,7 @@ struct InsightsTab: View {
                     EarningsBreakdownView(
                         result: result,
                         onAdjust: onAdjust,
+                        outlookGrants: outlookGrants,
                         bottomInset: isSignedIn ? 32 : 120,   // clear the save banner + tab bar
                         onAtBottomChange: { value in
                             atBottom = value

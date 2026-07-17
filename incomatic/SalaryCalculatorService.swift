@@ -32,6 +32,12 @@ nonisolated struct Earnings: Codable {
     let salary: SalaryRow?
     let hourly: HourlyRow?
     let bonus: Double?
+    /// ISO-8601 payout date ("2025-06-15"). Nil = assumed current tax year.
+    let bonusDate: String?
+    /// True = same amount recurs every year from the payout-date year onward.
+    let bonusRecurring: Bool?
+    /// Annual RSU value vesting this tax year (supplemental income).
+    let rsuVesting: Double?
     let commission: Double?
 }
 
@@ -125,6 +131,21 @@ nonisolated struct SalaryCalculationResponse: Codable {
     let rulePackVersion: String
     let lineItems: [LineItem]
     let explanation: [ExplanationItem]
+    /// Server-truth supplemental income tax breakdown. Nil when no supplemental income.
+    let supplemental: SupplementalBreakdown?
+}
+
+/// Attribution slices of the calculation's totals for bonus + commission + RSU income.
+/// ALL figures are ANNUAL (a lump-sum view), unlike the per-cadence fields above.
+nonisolated struct SupplementalBreakdown: Codable {
+    let bonusGross: Double
+    let commissionGross: Double
+    let rsuGross: Double
+    /// Flat federal supplemental withholding (22%).
+    let federalTax: Double
+    let socialSecurity: Double
+    let medicare: Double
+    let net: Double
 }
 
 nonisolated struct LineItem: Codable {
@@ -161,6 +182,14 @@ nonisolated struct ViewFriendlyResponse {
     let rulePackVersion: String
     /// Raw API line items, per-cadence, with category tags. Used by the donut + itemized summary.
     let lineItems: [LineItem]
+    /// Server-truth supplemental breakdown (ANNUAL figures). Nil when no supplemental income.
+    let supplemental: SupplementalBreakdown?
+    /// Bonus payout date from the request (ISO yyyy-MM-dd). Nil = assumed tax year.
+    let bonusPayoutDate: String?
+    /// Raw bonus lump sum from the request — feeds the outlook even when the
+    /// payout year excludes it from this year's paycheck.
+    let outlookBonusAmount: Double
+    let outlookBonusRecurring: Bool
 }
 
 nonisolated struct GrossPayDetails {
@@ -171,6 +200,8 @@ nonisolated struct GrossPayDetails {
     /// Full annual bonus as a one-time lump sum (not spread per period).
     /// Drives the standalone "one-time bonus" card on the Insights screen.
     let annualBonus: Double
+    /// Annual base salary (no bonus/commission/RSU) — the flat line in the outlook.
+    let baseAnnual: Double
     let payFrequency: String
 }
 
@@ -373,6 +404,7 @@ class SalaryCalculatorService {
                 totalPerPeriod: apiResponse.grossPerCadence,
                 annualTotal: annualGross,
                 annualBonus: bonusAnnual,
+                baseAnnual: baseSalaryAnnual,
                 payFrequency: displayCadence
             ),
             taxes: Taxes(
@@ -398,7 +430,11 @@ class SalaryCalculatorService {
             currency: apiResponse.currency,
             calculationId: apiResponse.calculationId,
             rulePackVersion: apiResponse.rulePackVersion,
-            lineItems: apiResponse.lineItems
+            lineItems: apiResponse.lineItems,
+            supplemental: apiResponse.supplemental,
+            bonusPayoutDate: originalRequest.earnings?.bonusDate,
+            outlookBonusAmount: originalRequest.earnings?.bonus ?? 0,
+            outlookBonusRecurring: originalRequest.earnings?.bonusRecurring ?? false
         )
     }
 }

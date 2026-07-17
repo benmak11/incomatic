@@ -10,6 +10,10 @@ import SwiftUI
 
 struct EarningsSection: View {
     @Bindable var state: CalculatorState
+    @ObservedObject var equity: EquityStore
+    let signedIn: Bool
+    let onOpenGrants: () -> Void
+    let onShowAccount: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -77,11 +81,117 @@ struct EarningsSection: View {
                         title: "Bonus & commission",
                         sub: "Taxed at 22% supplemental"
                     )
-                    CalculatorFields.amountField(label: "Bonus (annual)", text: $state.bonusAmount)
+                    CalculatorFields.amountField(
+                        label: "Bonus",
+                        text: $state.bonusAmount,
+                        suffix: "Lump sum"
+                    )
+                    if hasBonus {
+                        bonusDateRow
+                        CalculatorFields.toggleRow(
+                            "Repeats yearly",
+                            sub: "Same amount every year from its start year",
+                            isOn: $state.bonusRecurring
+                        )
+                        if let caption = bonusInclusionCaption {
+                            inclusionNote(caption)
+                        }
+                    }
                     CalculatorFields.amountField(label: "Commission (annual)", text: $state.commissionAmount)
                 }
+                .animation(.easeInOut(duration: 0.2), value: hasBonus)
+                .animation(.easeInOut(duration: 0.2), value: bonusInclusionCaption)
             }
             .padding(.bottom, 14)
+
+            EquityCardView(
+                state: state,
+                equity: equity,
+                signedIn: signedIn,
+                onOpenGrants: onOpenGrants,
+                onShowAccount: onShowAccount
+            )
+            .padding(.bottom, 14)
         }
+    }
+
+    // ─ Dated lump-sum bonus (§H) ─────────────────────────────
+
+    private var hasBonus: Bool { (Double(state.bonusAmount) ?? 0) > 0 }
+
+    private var bonusStartYear: Int? { state.bonusStartYear }
+
+    /// Inline note when the bonus start year keeps it out of this year's paycheck.
+    /// Nil date = assumed current tax year; recurring bonuses started in the past
+    /// are included, so neither case gets a caption.
+    private var bonusInclusionCaption: String? {
+        guard let year = bonusStartYear, year != AppConfig.taxYear else { return nil }
+        if state.bonusRecurring {
+            return year > AppConfig.taxYear
+                ? "Starts in \(String(year)) — repeats every year after."
+                : nil
+        }
+        return year > AppConfig.taxYear
+            ? "Lands in \(String(year)) — shown in your yearly outlook, not this year's paycheck."
+            : "Landed in \(String(year)) — not in this year's paycheck."
+    }
+
+    private var bonusDateRow: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            CalculatorFields.fieldLabel("PAID ON")
+            HStack {
+                if let date = state.bonusDate {
+                    DatePicker(
+                        "Bonus payout date",
+                        selection: Binding(
+                            get: { date },
+                            set: { state.bonusDate = $0 }
+                        ),
+                        displayedComponents: .date
+                    )
+                    .labelsHidden()
+                    .datePickerStyle(.compact)
+                    .tint(.incSage)
+                    Spacer()
+                    Button { state.bonusDate = nil } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(.incTextMute)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Clear payout date — assume this year")
+                } else {
+                    Button { state.bonusDate = Date() } label: {
+                        HStack(spacing: 8) {
+                            Text("This year")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.incTextDim)
+                            Image(systemName: "calendar")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.incSage)
+                            Spacer()
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Paid on: this year. Tap to pick a date")
+                }
+            }
+            .padding(.bottom, 8)
+            .overlay(Rectangle().fill(Color.incHairline).frame(height: 2), alignment: .bottom)
+        }
+        .padding(.bottom, 18)
+    }
+
+    private func inclusionNote(_ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Image(systemName: "info.circle")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.incBlush)
+            Text(text)
+                .font(.system(size: 12))
+                .foregroundColor(.incTextDim)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.bottom, 14)
     }
 }

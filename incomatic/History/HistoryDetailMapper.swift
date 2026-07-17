@@ -89,6 +89,7 @@ enum HistoryDetailMapper {
                 totalPerPeriod: response.grossPerCadence,
                 annualTotal: annualGross,
                 annualBonus: bonusAnnual,
+                baseAnnual: baseAnnual,
                 payFrequency: displayCadence
             ),
             taxes: Taxes(
@@ -114,7 +115,11 @@ enum HistoryDetailMapper {
             currency: response.currency,
             calculationId: response.calculationId,
             rulePackVersion: response.rulePackVersion,
-            lineItems: response.lineItems
+            lineItems: response.lineItems,
+            supplemental: response.supplemental,
+            bonusPayoutDate: request.earnings?.bonusDate,
+            outlookBonusAmount: request.earnings?.bonus ?? 0,
+            outlookBonusRecurring: request.earnings?.bonusRecurring ?? false
         )
     }
 }

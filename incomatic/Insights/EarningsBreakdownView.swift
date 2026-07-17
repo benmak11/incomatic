@@ -14,6 +14,8 @@ import SwiftUI
 struct EarningsBreakdownView: View {
     let result: ViewFriendlyResponse
     let onAdjust: () -> Void
+    /// Saved grants driving the outlook's future-year RSU segments (§I).
+    var outlookGrants: [RsuGrant] = []
     var bottomInset: CGFloat = 32
     var onAtBottomChange: (Bool) -> Void = { _ in }
     @State private var showPDFAlert = false
@@ -30,8 +32,11 @@ struct EarningsBreakdownView: View {
                 pageHeader
                 netPayHero
                 itemizedSummaryCard
-                if result.grossPay.annualBonus > 0 {
-                    bonusCard
+                if let supplemental = result.supplemental {
+                    supplementalCard(supplemental)
+                }
+                if showOutlook {
+                    YearlyOutlookView(result: result, grants: outlookGrants)
                 }
                 actionButtons
             }
@@ -122,20 +127,26 @@ struct EarningsBreakdownView: View {
         .padding(.horizontal, 16)
     }
 
-    // ─ One-time bonus ────────────────────────────────────────
-    // Federal supplemental flat rate (22%) + FICA (6.2% SS + 1.45% Medicare).
-    // A standalone estimate of the lump-sum bonus paycheck, kept separate from
-    // the recurring paycheck above. Matches the backend's supplemental treatment;
-    // state supplemental tax is omitted (varies widely) so this is an estimate.
-    private static let bonusFederalRate = 0.22
-    private static let bonusFicaRate    = 0.0765
+    /// Outlook renders only when there's something beyond flat base pay to show.
+    private var showOutlook: Bool {
+        result.outlookBonusAmount > 0
+            || (result.supplemental?.rsuGross ?? 0) > 0
+            || !outlookGrants.isEmpty
+    }
 
-    private var bonusGross: Double { result.grossPay.annualBonus }
-    private var bonusFederal: Double { bonusGross * Self.bonusFederalRate }
-    private var bonusFica: Double { bonusGross * Self.bonusFicaRate }
-    private var bonusNet: Double { max(0, bonusGross - bonusFederal - bonusFica) }
+    // ─ Supplemental income (server-truth, §F) ────────────────
+    // ALL figures on SupplementalBreakdown are ANNUAL — this is a lump-sum view,
+    // deliberately not divided by the pay cadence like the cards above it.
 
-    private var bonusCard: some View {
+    /// "Mar 15" from the request's ISO bonus date; nil when undated.
+    private func bonusDateLabel() -> String? {
+        guard let iso = result.bonusPayoutDate, let date = VestMath.parseDate(iso) else { return nil }
+        let f = DateFormatter()
+        f.dateFormat = "MMM d"
+        return f.string(from: date)
+    }
+
+    private func supplementalCard(_ supplemental: SupplementalBreakdown) -> some View {
         IncCard {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 10) {
@@ -148,30 +159,40 @@ struct EarningsBreakdownView: View {
                             .foregroundColor(.incBlush)
                     }
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("One-time bonus")
+                        Text("Supplemental income")
                             .font(.system(size: 15, weight: .bold)).foregroundColor(.incText)
-                        Text("Paid as a separate lump sum")
+                        Text("Annual · taxed at 22% supplemental")
                             .font(.system(size: 12)).foregroundColor(.incTextDim)
                     }
                     Spacer()
                 }
                 .padding(.bottom, 14)
 
-                bonusRow("Gross bonus", amount: bonusGross, emphasized: false)
+                if supplemental.bonusGross > 0 {
+                    bonusRow(bonusDateLabel().map { "Bonus · \($0)" } ?? "Bonus",
+                             amount: supplemental.bonusGross, emphasized: false)
+                }
+                if supplemental.commissionGross > 0 {
+                    bonusRow("Commission", amount: supplemental.commissionGross, emphasized: false)
+                }
+                if supplemental.rsuGross > 0 {
+                    bonusRow("RSU vesting", amount: supplemental.rsuGross, emphasized: false)
+                }
                 divider
-                bonusRow("Federal (22% supplemental)", amount: -bonusFederal, emphasized: false)
-                bonusRow("FICA (7.65%)", amount: -bonusFica, emphasized: false)
+                bonusRow("Federal (22% supplemental)", amount: -supplemental.federalTax, emphasized: false)
+                bonusRow("Social Security", amount: -supplemental.socialSecurity, emphasized: false)
+                bonusRow("Medicare", amount: -supplemental.medicare, emphasized: false)
                 Rectangle().fill(Color.incSageBg).frame(height: 2).padding(.vertical, 10)
                 HStack {
-                    Text("Net bonus").font(.system(size: 16, weight: .semibold)).foregroundColor(.incText)
+                    Text("Net supplemental").font(.system(size: 16, weight: .semibold)).foregroundColor(.incText)
                     Spacer()
-                    Text(formatCurrency(bonusNet))
+                    Text(formatCurrency(supplemental.net))
                         .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.incSage)
                         .monospacedDigit()
                 }
 
-                Text("Estimate. Bonuses are withheld at the 22% federal supplemental rate; state supplemental tax isn't included here.")
+                Text("Estimates value all \(String(AppConfig.taxYear)) vests at today's price. Actual tax withholding happens at each vest at that day's price. State tax on supplemental income is folded into the state line above.")
                     .font(.system(size: 11.5)).foregroundColor(.incTextDim)
                     .padding(.top, 10)
             }
