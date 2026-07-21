@@ -4,9 +4,9 @@
 //
 //  Created by Ben Makusha on 11/9/25.
 //
-//  Root view: three-tab TabView (Calculator + Insights + History), hosts the
-//  AccountManager + AccountSheet, and routes to Insights when a calculation
-//  completes.
+//  Root view: persistent shell (Calculator + Insights + History switched by a
+//  floating pill nav, per the Incomatic v2.0 handoff), hosts the AccountManager
+//  + AccountSheet, and routes to Insights when a calculation completes.
 //
 
 import SwiftUI
@@ -17,44 +17,54 @@ struct ContentView: View {
     @StateObject private var accountManager = AccountManager()
     @StateObject private var historyViewModel = HistoryViewModel()
     @StateObject private var equityStore = EquityStore()
-    @State private var selectedTab: Int = 0
+    @State private var selectedTab: MainTab = .calculator
     @State private var showingAccountSheet = false
     @State private var toastMessage: String?
+    @State private var pillNavCompact = false
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            CalculatorTab(
-                locationManager: locationManager,
-                viewModel: viewModel,
-                accountManager: accountManager,
-                equityStore: equityStore,
-                onShowAccount: { showingAccountSheet = true }
-            )
-            .tabItem { Label("Calculator", systemImage: "doc.text") }
-            .tag(0)
+        ZStack(alignment: .bottom) {
+            Group {
+                switch selectedTab {
+                case .calculator:
+                    CalculatorTab(
+                        locationManager: locationManager,
+                        viewModel: viewModel,
+                        accountManager: accountManager,
+                        equityStore: equityStore,
+                        onShowAccount: { showingAccountSheet = true },
+                        onScrollDirectionChange: { down in pillNavCompact = down }
+                    )
+                case .insights:
+                    InsightsTab(
+                        result: viewModel.calculationResult,
+                        isLoading: viewModel.isLoading,
+                        errorMessage: viewModel.errorMessage,
+                        onAdjust: { selectedTab = .calculator },
+                        isSignedIn: accountManager.isSignedIn,
+                        onShowAccount: { showingAccountSheet = true },
+                        outlookGrants: equityStore.grants
+                    )
+                case .history:
+                    HistoryTab(
+                        accountManager: accountManager,
+                        viewModel: historyViewModel,
+                        onShowAccount: { showingAccountSheet = true }
+                    )
+                }
+            }
 
-            InsightsTab(
-                result: viewModel.calculationResult,
-                isLoading: viewModel.isLoading,
-                errorMessage: viewModel.errorMessage,
-                onAdjust: { selectedTab = 0 },
-                isSignedIn: accountManager.isSignedIn,
-                onShowAccount: { showingAccountSheet = true },
-                outlookGrants: equityStore.grants
-            )
-            .tabItem { Label("Insights", systemImage: "chart.bar") }
-            .tag(1)
-
-            HistoryTab(
-                accountManager: accountManager,
-                viewModel: historyViewModel,
-                onShowAccount: { showingAccountSheet = true }
-            )
-            .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
-            .tag(2)
+            AppPillNav(tab: $selectedTab, compact: pillNavCompact, onExpandTap: { pillNavCompact = false })
         }
-        .accentColor(.incSage)
-        .tabBarMinimizeOnScrollDown()
+        .overlay(alignment: .topTrailing) {
+            AccountGlyph(
+                signedIn: accountManager.isSignedIn,
+                user: accountManager.currentUser,
+                action: { showingAccountSheet = true }
+            )
+            .padding(.top, 8)
+            .padding(.trailing, 20)
+        }
         .overlay(alignment: .bottom) {
             if let toastMessage {
                 SavedToast(text: toastMessage)
@@ -80,7 +90,7 @@ struct ContentView: View {
         }
         .onChange(of: viewModel.isLoading) { _, loading in
             if !loading && viewModel.calculationResult != nil {
-                selectedTab = 1
+                selectedTab = .insights
                 if accountManager.isSignedIn {
                     Task {
                         await historyViewModel.load()
@@ -88,6 +98,9 @@ struct ContentView: View {
                     }
                 }
             }
+        }
+        .onChange(of: selectedTab) { _, _ in
+            pillNavCompact = false
         }
         .onChange(of: accountManager.isSignedIn) { _, signedIn in
             if signedIn {
@@ -107,19 +120,6 @@ struct ContentView: View {
         Task {
             try? await Task.sleep(nanoseconds: 2_400_000_000)
             withAnimation(.easeIn(duration: 0.25)) { toastMessage = nil }
-        }
-    }
-}
-
-private extension View {
-    // iOS 26's native Instagram-style minimizing tab bar. App deploys to 18.6,
-    // so this is a no-op on iOS 18–25 (the tab bar just stays full-size there).
-    @ViewBuilder
-    func tabBarMinimizeOnScrollDown() -> some View {
-        if #available(iOS 26.0, *) {
-            self.tabBarMinimizeBehavior(.onScrollDown)
-        } else {
-            self
         }
     }
 }

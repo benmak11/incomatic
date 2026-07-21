@@ -105,12 +105,11 @@ func buildCalculationRequest(state: CalculatorState) -> BuiltCalculationRequest 
         || (Double(state.itemizedDeductions) ?? 0) > 0
         || (Double(state.additionalWithholding) ?? 0) > 0
         || state.exemptFederal || state.exemptSocialSecurity || state.exemptMedicare
-        || state.useOldW4 || state.nonresidentAlien
+        || state.useOldW4
     // On the pre-2020 W-4 the modern step-3/4 fields don't exist — send nil so they
     // can't skew the legacy allowance-based calc.
     let w4: W4? = w4HasData ? W4(
         useOldW4: state.useOldW4 ? true : nil,
-        nonresidentAlien: state.nonresidentAlien ? true : nil,
         dependentsAmount: state.useOldW4 ? nil : Double(state.dependentsAmount),
         otherIncome: state.useOldW4 ? nil : Double(state.otherIncome),
         itemizedDeductions: state.useOldW4 ? nil : Double(state.itemizedDeductions),

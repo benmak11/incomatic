@@ -37,16 +37,6 @@ struct FederalSection: View {
 
             IncCard {
                 VStack(alignment: .leading, spacing: 0) {
-                    CalculatorFields.cardHeader(icon: "doc.text", title: "Form W-4")
-                    CalculatorFields.toggleRow("Use 2019 or earlier W-4",        isOn: $state.useOldW4)
-                    CalculatorFields.toggleRow("Nonresident alien",              isOn: $state.nonresidentAlien)
-                    CalculatorFields.toggleRow("Multiple jobs · spouse works",   isOn: $state.multipleJobs)
-                }
-            }
-            .padding(.bottom, 14)
-
-            IncCard {
-                VStack(alignment: .leading, spacing: 0) {
                     CalculatorFields.cardHeader(icon: "person.2.fill", title: "W-4 details")
                     if state.useOldW4 {
                         CalculatorFields.plainNumberField(label: "Allowances",            text: $state.allowances)
