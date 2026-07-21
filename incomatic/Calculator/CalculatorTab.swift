@@ -18,6 +18,10 @@ struct CalculatorTab: View {
     @ObservedObject var accountManager: AccountManager
     @ObservedObject var equityStore: EquityStore
     let onShowAccount: () -> Void
+    /// Reports scroll direction so the shell's floating pill nav can shrink
+    /// out of the way while filling out a long section, like the native
+    /// tab bar's onScrollDown minimize behavior.
+    var onScrollDirectionChange: (Bool) -> Void = { _ in }
     @State private var state = CalculatorState()
     @State private var showGrantsSheet = false
     @State private var keyboardVisible = false
@@ -32,16 +36,7 @@ struct CalculatorTab: View {
 
             ScrollView {
                 VStack(spacing: 0) {
-                    IncTopBar {
-                        AccountGlyph(
-                            signedIn: accountManager.isSignedIn,
-                            user: accountManager.currentUser,
-                            action: onShowAccount
-                        )
-                    }
-                    SectionStepIndicator(active: $state.activeSection)
-                        .padding(.horizontal, 22)
-                    pageHeadline
+                    AppSectionHeader(title: "Calculator", section: $state.activeSection)
 
                     VStack(spacing: 0) {
                         switch state.activeSection {
@@ -58,7 +53,7 @@ struct CalculatorTab: View {
                         }
                     }
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 120)   // tab-bar clearance; CTA only renders on demand
+                    .padding(.bottom, 210)   // sticky CTA + floating pill-nav clearance
                     .id(state.activeSection)  // re-mount for animation
                     .transition(.opacity.combined(with: .offset(y: 8)))
                 }
@@ -70,9 +65,16 @@ struct CalculatorTab: View {
                 guard scrollable > 0 else { return 1 }
                 let offsetY = geo.contentOffset.y + geo.contentInsets.top
                 return min(max(offsetY / scrollable, 0), 1)
-            } action: { _, progress in
+            } action: { old, progress in
                 // No withAnimation: opacity must track the finger frame-by-frame.
                 scrollProgress = progress
+                if progress <= 0.02 {
+                    onScrollDirectionChange(false)   // back at the top — always expanded
+                } else if progress > old + 0.004 {
+                    onScrollDirectionChange(true)    // scrolling down — shrink
+                } else if progress < old - 0.004 {
+                    onScrollDirectionChange(false)   // scrolling up — expand
+                }
             }
             .toolbar {
                 // .decimalPad has no return key. Add a Done button above the keypad
@@ -116,7 +118,7 @@ struct CalculatorTab: View {
                     scrollProgress: scrollProgress
                 )
                 }
-                .padding(.bottom, 8)
+                .padding(.bottom, 96)   // float above the pill nav
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
@@ -173,26 +175,6 @@ struct CalculatorTab: View {
         }
         .buttonStyle(.plain)
         .transition(.move(edge: .bottom).combined(with: .opacity))
-    }
-
-    private var pageHeadline: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Define your\nfinancial horizon")
-                .font(.system(size: 36, weight: .bold))
-                .foregroundColor(.incText)
-                .kerning(-1)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 24)
-            Text("Enter your earnings and deductions to project your take-home pay.")
-                .font(.system(size: 14))
-                .foregroundColor(.incTextDim)
-                .lineSpacing(3)
-                .frame(maxWidth: 280, alignment: .leading)
-                .padding(.top, 4)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 22)
-        .padding(.bottom, 16)
     }
 
     private func loadStatesFromApi() async {

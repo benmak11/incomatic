@@ -47,7 +47,7 @@ struct InsightsTab: View {
                         result: result,
                         onAdjust: onAdjust,
                         outlookGrants: outlookGrants,
-                        bottomInset: isSignedIn ? 32 : 120,   // clear the save banner + tab bar
+                        bottomInset: isSignedIn ? 120 : 160,   // clear the save banner + floating pill nav
                         onAtBottomChange: { value in
                             atBottom = value
                             if !value { bannerDismissed = false }   // re-arm when leaving the bottom

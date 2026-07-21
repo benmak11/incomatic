@@ -71,7 +71,6 @@ nonisolated struct USOptions: Codable {
 
 nonisolated struct W4: Codable {
     let useOldW4: Bool?
-    let nonresidentAlien: Bool?
     /// $2000 per qualifying child + $500 per other dependent.
     let dependentsAmount: Double?
     /// Annual non-job income (W-4 step 4(a)).
