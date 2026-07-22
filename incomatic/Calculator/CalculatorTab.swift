@@ -5,8 +5,9 @@
 //
 //  Created by Ben Makusha on 05/28/2026
 //
-//  Orchestrator for the four-section form. Owns CalculatorState (the @Observable
-//  source of truth) and the SalaryCalculatorService used to load US states.
+//  Orchestrator for the four-section form. CalculatorState (the @Observable
+//  source of truth) is owned by ContentView and shared with onboarding, so
+//  answers collected there are already in place when this tab first appears.
 //
 
 import SwiftUI
@@ -17,17 +18,15 @@ struct CalculatorTab: View {
     @ObservedObject var viewModel: SalaryCalculatorViewModel
     @ObservedObject var accountManager: AccountManager
     @ObservedObject var equityStore: EquityStore
+    @Bindable var state: CalculatorState
     let onShowAccount: () -> Void
     /// Reports scroll direction so the shell's floating pill nav can shrink
     /// out of the way while filling out a long section, like the native
     /// tab bar's onScrollDown minimize behavior.
     var onScrollDirectionChange: (Bool) -> Void = { _ in }
-    @State private var state = CalculatorState()
     @State private var showGrantsSheet = false
     @State private var keyboardVisible = false
     @State private var scrollProgress: CGFloat = 0   // 0 at top → 1 at bottom
-
-    private let service = SalaryCalculatorService()
 
     var body: some View {
       NavigationStack {
@@ -178,11 +177,7 @@ struct CalculatorTab: View {
     }
 
     private func loadStatesFromApi() async {
-        do {
-            state.statesList = try await service.fetchUSStates()
-        } catch {
-            state.statesList = fallbackStates
-        }
+        state.statesList = await loadUSStates()
     }
 
     private func triggerCalculation() {

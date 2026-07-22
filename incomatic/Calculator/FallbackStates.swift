@@ -8,6 +8,16 @@
 //  Hardcoded 51-entry list used when GET /v1/countries/US/states fails.
 //
 
+/// Shared by CalculatorTab and onboarding — both need the state list ready
+/// before their respective state pickers render.
+func loadUSStates() async -> [SalaryCalculatorService.StateEntry] {
+    do {
+        return try await SalaryCalculatorService().fetchUSStates()
+    } catch {
+        return fallbackStates
+    }
+}
+
 import Foundation
 
 let fallbackStates: [SalaryCalculatorService.StateEntry] = [
