@@ -18,6 +18,9 @@ struct EarningsBreakdownView: View {
     var outlookGrants: [RsuGrant] = []
     var bottomInset: CGFloat = 32
     var onAtBottomChange: (Bool) -> Void = { _ in }
+    /// Reports scroll direction so the shell's floating pill nav shrinks the
+    /// same way here as it does on Calculator.
+    var onScrollDirectionChange: (Bool) -> Void = { _ in }
     @State private var showPDFAlert = false
 
     // Sage palette donut
@@ -28,8 +31,7 @@ struct EarningsBreakdownView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                IncTopBar()
-                pageHeader
+                AppSectionHeader(title: "Insights")
                 netPayHero
                 itemizedSummaryCard
                 if let supplemental = result.supplemental {
@@ -51,6 +53,7 @@ struct EarningsBreakdownView: View {
         } action: { _, atBottom in
             onAtBottomChange(atBottom)
         }
+        .reportingScrollDirection(onScrollDirectionChange)
         .refreshable {
             // Hook for future GET /v1/calculations/{id}/refresh once implemented.
             try? await Task.sleep(nanoseconds: 700_000_000)
@@ -60,20 +63,6 @@ struct EarningsBreakdownView: View {
         } message: {
             Text("PDF report download requires some work. It will be unveiled 🔜")
         }
-    }
-
-    private var pageHeader: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("RESULTS · \(result.grossPay.payFrequency.uppercased())")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundColor(.incSage).kerning(0.8)
-            Text("Earnings breakdown")
-                .font(.system(size: 32, weight: .semibold))
-                .foregroundColor(.incText).kerning(-1)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 22)
-        .padding(.top, 4)
     }
 
     // ─ Category groupings ────────────────────────────────────

@@ -19,6 +19,9 @@ struct InsightsTab: View {
     let onShowAccount: () -> Void
     /// Saved grants for the yearly outlook's future-vest segments.
     var outlookGrants: [RsuGrant] = []
+    /// Reports scroll direction so the shell's floating pill nav shrinks the
+    /// same way here as it does on Calculator.
+    var onScrollDirectionChange: (Bool) -> Void = { _ in }
 
     @State private var atBottom = false
     @State private var bannerDismissed = false
@@ -51,7 +54,8 @@ struct InsightsTab: View {
                         onAtBottomChange: { value in
                             atBottom = value
                             if !value { bannerDismissed = false }   // re-arm when leaving the bottom
-                        }
+                        },
+                        onScrollDirectionChange: onScrollDirectionChange
                     )
                 } else {
                     emptyState
@@ -60,7 +64,7 @@ struct InsightsTab: View {
 
             if result != nil, !isSignedIn {
                 SaveBanner(isVisible: bannerBinding, onSignIn: onShowAccount)
-                    .padding(.bottom, 24)
+                    .padding(.bottom, 96)   // clear the floating pill nav — was colliding with it
             }
         }
         // Reset bottom/dismiss tracking for each new calculation.

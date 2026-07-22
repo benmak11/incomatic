@@ -106,13 +106,15 @@ struct ContentView: View {
                         onAdjust: { selectedTab = .calculator },
                         isSignedIn: accountManager.isSignedIn,
                         onShowAccount: { showingAccountSheet = true },
-                        outlookGrants: equityStore.grants
+                        outlookGrants: equityStore.grants,
+                        onScrollDirectionChange: { down in pillNavCompact = down }
                     )
                 case .history:
                     HistoryTab(
                         accountManager: accountManager,
                         viewModel: historyViewModel,
-                        onShowAccount: { showingAccountSheet = true }
+                        onShowAccount: { showingAccountSheet = true },
+                        onScrollDirectionChange: { down in pillNavCompact = down }
                     )
                 }
             }
