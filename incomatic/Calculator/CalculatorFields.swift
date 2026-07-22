@@ -204,6 +204,51 @@ enum CalculatorFields {
         }
     }
 
+    /// Bonus payout date entry: DatePicker + clear once set, "This year" tap
+    /// target when nil. Shared by the Earnings section and onboarding's bonus step.
+    static func bonusDateRow(date: Binding<Date?>) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            fieldLabel("PAID ON")
+            HStack {
+                if let unwrapped = date.wrappedValue {
+                    DatePicker(
+                        "Bonus payout date",
+                        selection: Binding(get: { unwrapped }, set: { date.wrappedValue = $0 }),
+                        displayedComponents: .date
+                    )
+                    .labelsHidden()
+                    .datePickerStyle(.compact)
+                    .tint(.incSage)
+                    Spacer()
+                    Button { date.wrappedValue = nil } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(.incTextMute)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Clear payout date; assume this year")
+                } else {
+                    Button { date.wrappedValue = Date() } label: {
+                        HStack(spacing: 8) {
+                            Text("This year")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.incTextDim)
+                            Image(systemName: "calendar")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.incSage)
+                            Spacer()
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Paid on: this year. Tap to pick a date")
+                }
+            }
+            .padding(.bottom, 8)
+            .overlay(Rectangle().fill(Color.incHairline).frame(height: 2), alignment: .bottom)
+        }
+        .padding(.bottom, 18)
+    }
+
     static func cardHeader(icon: String, title: String, sub: String? = nil) -> some View {
         HStack(alignment: .top, spacing: 12) {
             ZStack {

@@ -87,7 +87,7 @@ struct EarningsSection: View {
                         suffix: "Lump sum"
                     )
                     if hasBonus {
-                        bonusDateRow
+                        CalculatorFields.bonusDateRow(date: $state.bonusDate)
                         CalculatorFields.toggleRow(
                             "Repeats yearly",
                             sub: "Same amount every year from its start year",
@@ -134,52 +134,6 @@ struct EarningsSection: View {
         return year > AppConfig.taxYear
             ? "Lands in \(String(year)) — shown in your yearly outlook, not this year's paycheck."
             : "Landed in \(String(year)) — not in this year's paycheck."
-    }
-
-    private var bonusDateRow: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            CalculatorFields.fieldLabel("PAID ON")
-            HStack {
-                if let date = state.bonusDate {
-                    DatePicker(
-                        "Bonus payout date",
-                        selection: Binding(
-                            get: { date },
-                            set: { state.bonusDate = $0 }
-                        ),
-                        displayedComponents: .date
-                    )
-                    .labelsHidden()
-                    .datePickerStyle(.compact)
-                    .tint(.incSage)
-                    Spacer()
-                    Button { state.bonusDate = nil } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(.incTextMute)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Clear payout date — assume this year")
-                } else {
-                    Button { state.bonusDate = Date() } label: {
-                        HStack(spacing: 8) {
-                            Text("This year")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(.incTextDim)
-                            Image(systemName: "calendar")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.incSage)
-                            Spacer()
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Paid on: this year. Tap to pick a date")
-                }
-            }
-            .padding(.bottom, 8)
-            .overlay(Rectangle().fill(Color.incHairline).frame(height: 2), alignment: .bottom)
-        }
-        .padding(.bottom, 18)
     }
 
     private func inclusionNote(_ text: String) -> some View {
