@@ -20,6 +20,9 @@ struct SessionDetailView: View {
 
     private let historyService = CalculationHistoryService()
     let viewModel: HistoryViewModel
+    /// Reports scroll direction so the shell's floating pill nav shrinks the
+    /// same way here as it does on Calculator.
+    var onScrollDirectionChange: (Bool) -> Void = { _ in }
 
     private let takeHomeColor = Color.incSage
     private let taxesColor    = Color.incBlush
@@ -36,6 +39,7 @@ struct SessionDetailView: View {
                 }
                 .padding(.bottom, 100)
             }
+            .reportingScrollDirection(onScrollDirectionChange)
         }
         .task { await loadDetail() }
     }

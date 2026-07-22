@@ -17,6 +17,9 @@ struct HistoryTab: View {
     @ObservedObject var accountManager: AccountManager
     @ObservedObject var viewModel: HistoryViewModel
     let onShowAccount: () -> Void
+    /// Reports scroll direction so the shell's floating pill nav shrinks the
+    /// same way here as it does on Calculator.
+    var onScrollDirectionChange: (Bool) -> Void = { _ in }
     @State private var selected: SavedCalculationSummary?
     @State private var deleting: Bool = false
 
@@ -29,7 +32,8 @@ struct HistoryTab: View {
                     summary: summary,
                     onBack: { selected = nil },
                     onDelete: { await delete(id: summary.id) },
-                    viewModel: viewModel
+                    viewModel: viewModel,
+                    onScrollDirectionChange: onScrollDirectionChange
                 )
             } else {
                 listScroll
@@ -41,33 +45,27 @@ struct HistoryTab: View {
     private var listScroll: some View {
         ScrollView {
             VStack(spacing: 0) {
-                IncTopBar()
-                pageHeader
+                AppSectionHeader(title: "History")
+                pageSubtitle
                 content
             }
             .padding(.bottom, 120)
         }
+        .reportingScrollDirection(onScrollDirectionChange)
         .refreshable { await viewModel.load() }
     }
 
-    private var pageHeader: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("History")
-                .font(.system(size: 36, weight: .medium, design: .serif))
-                .foregroundColor(.incText)
-                .kerning(-1)
-            Text(accountManager.isSignedIn
-                 ? "Your saved take-home projections, synced to your account."
-                 : "Keep a record of every projection you run.")
-                .font(.system(size: 14))
-                .foregroundColor(.incTextDim)
-                .lineSpacing(3)
-                .frame(maxWidth: 290, alignment: .leading)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 22)
-        .padding(.top, 8)
-        .padding(.bottom, 14)
+    private var pageSubtitle: some View {
+        Text(accountManager.isSignedIn
+             ? "Your saved take-home projections, synced to your account."
+             : "Keep a record of every projection you run.")
+            .font(.system(size: 14))
+            .foregroundColor(.incTextDim)
+            .lineSpacing(3)
+            .frame(maxWidth: 290, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 22)
+            .padding(.bottom, 14)
     }
 
     @ViewBuilder
