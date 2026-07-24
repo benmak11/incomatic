@@ -5,7 +5,7 @@
 //
 //  Created by Ben Makusha on 05/28/2026
 //
-//  Router for the Insights screen: loading → result → empty.
+//  Router for the Insights screen: loading → error → result → empty.
 //
 
 import SwiftUI
@@ -17,14 +17,18 @@ struct InsightsTab: View {
     let onAdjust: () -> Void
     let isSignedIn: Bool
     let onShowAccount: () -> Void
-    /// Saved grants for the yearly outlook's future-vest segments.
+    /// Saved grants for the yearly outlook's future-vest segments, and for
+    /// deriving dated RSU windfalls when the budget flow is started.
     var outlookGrants: [RsuGrant] = []
     /// Reports scroll direction so the shell's floating pill nav shrinks the
     /// same way here as it does on Calculator.
     var onScrollDirectionChange: (Bool) -> Void = { _ in }
+    @ObservedObject var budgetStore: BudgetStore
+    let calculatorState: CalculatorState
 
     @State private var atBottom = false
     @State private var bannerDismissed = false
+    @State private var showingBudgetFlow = false
 
     // Banner is shown whenever we're at the bottom AND it hasn't been dismissed during
     // this visit. Leaving the bottom re-arms it, so it pops again next time you return.
@@ -45,6 +49,8 @@ struct InsightsTab: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color.incBg.ignoresSafeArea())
+                } else if let errorMessage {
+                    errorState(errorMessage)
                 } else if let result = result {
                     EarningsBreakdownView(
                         result: result,
@@ -55,7 +61,10 @@ struct InsightsTab: View {
                             atBottom = value
                             if !value { bannerDismissed = false }   // re-arm when leaving the bottom
                         },
-                        onScrollDirectionChange: onScrollDirectionChange
+                        onScrollDirectionChange: onScrollDirectionChange,
+                        showBudgetCTA: isSignedIn,
+                        hasExistingBudget: !budgetStore.budget.goals.isEmpty || !budgetStore.budget.expenses.isEmpty,
+                        onStartBudget: { showingBudgetFlow = true }
                     )
                 } else {
                     emptyState
@@ -71,6 +80,49 @@ struct InsightsTab: View {
         .onChange(of: isLoading) { _, loading in
             if loading { atBottom = false; bannerDismissed = false }
         }
+        .fullScreenCover(isPresented: $showingBudgetFlow) {
+            if let result {
+                BudgetFlowView(
+                    budgetStore: budgetStore,
+                    calculatorState: calculatorState,
+                    calculationResult: result,
+                    grants: outlookGrants,
+                    onClose: { showingBudgetFlow = false }
+                )
+            }
+        }
+    }
+
+    /// Shown when a calculation fails (errorMessage set, no result). Without this
+    /// a failed calc — notably the first one right after onboarding — fell through
+    /// to the empty "No results yet" state with no hint that anything broke.
+    private func errorState(_ message: String) -> some View {
+        VStack(spacing: 20) {
+            ZStack {
+                Circle().fill(Color.incBlushBg).frame(width: 80, height: 80)
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 32, weight: .light))
+                    .foregroundColor(.incBlush)
+            }
+            Text("Couldn’t calculate")
+                .font(.system(size: 26, weight: .semibold))
+                .foregroundColor(.incText)
+            Text(message)
+                .font(.system(size: 14))
+                .foregroundColor(.incTextDim)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+            Button(action: onAdjust) {
+                Text("Back to Calculator")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 22).padding(.vertical, 13)
+                    .background(RoundedRectangle(cornerRadius: 14).fill(Color.incSage))
+                    .shadow(color: Color.incSage.opacity(0.3), radius: 8, x: 0, y: 2)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.incBg.ignoresSafeArea())
     }
 
     private var emptyState: some View {

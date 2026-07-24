@@ -21,6 +21,11 @@ struct EarningsBreakdownView: View {
     /// Reports scroll direction so the shell's floating pill nav shrinks the
     /// same way here as it does on Calculator.
     var onScrollDirectionChange: (Bool) -> Void = { _ in }
+    /// The budget CTA only makes sense for the live Insights result, not a
+    /// saved-session detail view (SessionDetailView doesn't pass these).
+    var showBudgetCTA: Bool = false
+    var hasExistingBudget: Bool = false
+    var onStartBudget: () -> Void = {}
     @State private var showPDFAlert = false
 
     // Sage palette donut
@@ -39,6 +44,10 @@ struct EarningsBreakdownView: View {
                 }
                 if showOutlook {
                     YearlyOutlookView(result: result, grants: outlookGrants)
+                }
+                if showBudgetCTA {
+                    InsightsBudgetCTACard(hasExistingBudget: hasExistingBudget, onStart: onStartBudget)
+                        .padding(.horizontal, 16)
                 }
                 actionButtons
             }

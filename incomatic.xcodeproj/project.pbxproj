@@ -6,8 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		3596A1203012ED8A00769047 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 359415A82EC10DDE00555F58 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 359415AF2EC10DDE00555F58;
+			remoteInfo = incomatic;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		355BBBB82FD8B25F00D3A5E2 /* Incomatic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Incomatic.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3596A11C3012ED8A00769047 /* incomaticTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = incomaticTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		35F0C0F202EC10DD00555A02 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
 		35F0C0F402EC10DD00555A04 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -18,10 +29,22 @@
 			path = incomatic;
 			sourceTree = "<group>";
 		};
+		3596A11D3012ED8A00769047 /* incomaticTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = incomaticTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		359415AD2EC10DDE00555F58 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3596A1193012ED8A00769047 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -37,6 +60,8 @@
 				359415B22EC10DDE00555F58 /* incomatic */,
 				35F0C0F002EC10DD00555A00 /* Config */,
 				355BBBB82FD8B25F00D3A5E2 /* Incomatic.app */,
+				3596A11C3012ED8A00769047 /* incomaticTests.xctest */,
+				3596A11D3012ED8A00769047 /* incomaticTests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -74,6 +99,29 @@
 			productReference = 355BBBB82FD8B25F00D3A5E2 /* Incomatic.app */;
 			productType = "com.apple.product-type.application";
 		};
+		3596A11B3012ED8A00769047 /* incomaticTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3596A1243012ED8A00769047 /* Build configuration list for PBXNativeTarget "incomaticTests" */;
+			buildPhases = (
+				3596A1183012ED8A00769047 /* Sources */,
+				3596A1193012ED8A00769047 /* Frameworks */,
+				3596A11A3012ED8A00769047 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3596A1213012ED8A00769047 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				3596A11D3012ED8A00769047 /* incomaticTests */,
+			);
+			name = incomaticTests;
+			packageProductDependencies = (
+			);
+			productName = incomaticTests;
+			productReference = 3596A11C3012ED8A00769047 /* incomaticTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -81,11 +129,15 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2600;
+				LastSwiftUpdateCheck = 2650;
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					359415AF2EC10DDE00555F58 = {
 						CreatedOnToolsVersion = 26.0.1;
+					};
+					3596A11B3012ED8A00769047 = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = 359415AF2EC10DDE00555F58;
 					};
 				};
 			};
@@ -104,12 +156,20 @@
 			projectRoot = "";
 			targets = (
 				359415AF2EC10DDE00555F58 /* incomatic */,
+				3596A11B3012ED8A00769047 /* incomaticTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		359415AE2EC10DDE00555F58 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3596A11A3012ED8A00769047 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -126,7 +186,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		3596A1183012ED8A00769047 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		3596A1213012ED8A00769047 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 359415AF2EC10DDE00555F58 /* incomatic */;
+			targetProxy = 3596A1203012ED8A00769047 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		359415B92EC10DDF00555F58 /* Debug */ = {
@@ -328,6 +403,50 @@
 			};
 			name = Release;
 		};
+		3596A1223012ED8A00769047 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X9S97S4N54;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.makusha.incomaticTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Incomatic.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Incomatic";
+			};
+			name = Debug;
+		};
+		3596A1233012ED8A00769047 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X9S97S4N54;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.makusha.incomaticTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Incomatic.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Incomatic";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -345,6 +464,15 @@
 			buildConfigurations = (
 				359415BC2EC10DDF00555F58 /* Debug */,
 				359415BD2EC10DDF00555F58 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3596A1243012ED8A00769047 /* Build configuration list for PBXNativeTarget "incomaticTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3596A1223012ED8A00769047 /* Debug */,
+				3596A1233012ED8A00769047 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

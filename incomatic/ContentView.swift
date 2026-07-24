@@ -18,6 +18,7 @@ struct ContentView: View {
     @StateObject private var accountManager = AccountManager()
     @StateObject private var historyViewModel = HistoryViewModel()
     @StateObject private var equityStore = EquityStore()
+    @StateObject private var budgetStore = BudgetStore()
     /// Shared with onboarding so answers collected there are already in
     /// place once the Calculator tab is reachable.
     @State private var calculatorState = CalculatorState()
@@ -51,10 +52,12 @@ struct ContentView: View {
             viewModel.attach(accountManager: accountManager)
             historyViewModel.attach(accountManager: accountManager)
             equityStore.attach(accountManager: accountManager)
+            budgetStore.attach(accountManager: accountManager)
             accountManager.restoreSession()
             if accountManager.isSignedIn {
                 await historyViewModel.load()
                 await equityStore.load()
+                await budgetStore.load()
             }
         }
         .onChange(of: viewModel.isLoading) { _, loading in
@@ -76,10 +79,12 @@ struct ContentView: View {
                 Task {
                     await historyViewModel.load()
                     await equityStore.load()
+                    await budgetStore.load()
                 }
             } else {
                 historyViewModel.clearForSignOut()
                 equityStore.clear()
+                budgetStore.clear()
             }
         }
     }
@@ -107,7 +112,9 @@ struct ContentView: View {
                         isSignedIn: accountManager.isSignedIn,
                         onShowAccount: { showingAccountSheet = true },
                         outlookGrants: equityStore.grants,
-                        onScrollDirectionChange: { down in pillNavCompact = down }
+                        onScrollDirectionChange: { down in pillNavCompact = down },
+                        budgetStore: budgetStore,
+                        calculatorState: calculatorState
                     )
                 case .history:
                     HistoryTab(
@@ -140,10 +147,14 @@ struct ContentView: View {
 
     /// Wraps up onboarding: locks the gate so it never shows again, then runs
     /// the same request-build + calculate flow CalculatorTab's CTA uses. The
-    /// shell mounts immediately (mid-calculation); the isLoading watcher above
-    /// routes to Insights once the result lands.
+    /// shell mounts straight onto Insights already showing its "Calculating…"
+    /// spinner — we land there and flip isLoading on synchronously so the first
+    /// render is the spinner, not a flash of the empty Calculator tab (or the
+    /// Insights empty state) before the result routes over.
     private func finishOnboarding() {
         hasCompletedOnboarding = true
+        selectedTab = .insights
+        viewModel.isLoading = true
         let built = buildCalculationRequest(state: calculatorState)
         Task {
             await viewModel.calculateSalary(

@@ -66,7 +66,7 @@ final class CalculatorState {
     var healthcareFsaPerPeriod: String = ""
     var dependentCareFsaPerPeriod: String = ""
     var hsaPerPeriod: String = ""
-    var traditional401kPercent: Double = 6.0
+    var traditional401kPercent: Double = 0.0
     var roth401kPercent: Double = 0.0
     var customDeductions: [CustomDeduction] = []
 
