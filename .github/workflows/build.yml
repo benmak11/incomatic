@@ -40,3 +40,64 @@ jobs:
           -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
           -quiet || echo "No tests found, skipping test execution"
       continue-on-error: true
+
+  sonar:
+    name: SonarQube Cloud
+    runs-on: macos-26
+    # Guarded so CI stays green until SonarCloud is set up for this repo — see
+    # sonar-project.properties and the runbook in CLAUDE.md for the one-time
+    # human steps (create the SonarCloud project, add the repo secrets).
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        # Sonar wants full history for blame/new-code analysis.
+        fetch-depth: 0
+
+    - name: Select Xcode version
+      if: ${{ env.SONAR_TOKEN != '' }}
+      run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+    - name: Install sonar-scanner + slather
+      if: ${{ env.SONAR_TOKEN != '' }}
+      run: |
+        brew install sonar-scanner
+        gem install slather --no-document
+
+    - name: Test with coverage
+      if: ${{ env.SONAR_TOKEN != '' }}
+      run: |
+        xcodebuild clean build test \
+          -project incomatic.xcodeproj \
+          -scheme incomatic \
+          -configuration Debug \
+          -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+          -derivedDataPath build \
+          -enableCodeCoverage YES \
+          CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO \
+          -quiet
+
+    - name: Convert coverage to Sonar generic format
+      if: ${{ env.SONAR_TOKEN != '' }}
+      run: |
+        slather coverage --sonarqube-xml --scheme incomatic \
+          --build-directory build \
+          ./incomatic.xcodeproj
+
+    - name: SonarQube Cloud analysis
+      if: ${{ env.SONAR_TOKEN != '' }}
+      env:
+        SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+        SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+      run: |
+        sonar-scanner \
+          -Dsonar.organization="$SONAR_ORGANIZATION" \
+          -Dsonar.projectKey="$SONAR_PROJECT_KEY" \
+          -Dsonar.token="$SONAR_TOKEN"
+
+    - name: Skip notice
+      if: ${{ env.SONAR_TOKEN == '' }}
+      run: echo "SONAR_TOKEN not set — skipping SonarQube Cloud analysis. See CLAUDE.md runbook to enable."
