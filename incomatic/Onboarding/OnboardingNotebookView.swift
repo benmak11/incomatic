@@ -55,6 +55,9 @@ struct OnboardingNotebookView: View {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { keyboardVisible = false }
         }
         .animation(.easeInOut(duration: 0.3), value: keyboardVisible)
+        // One Done bar for the whole flow — every step's amountFields share this
+        // ScrollView's hosting context (.decimalPad has no return key of its own).
+        .keyboardDoneToolbar()
     }
 
     // ─ Chrome ────────────────────────────────────────────────

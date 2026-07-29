@@ -76,6 +76,7 @@ struct GrantFormView: View {
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) { saveButton }
         .task(id: searchQuery) { await runSearch() }
+        .keyboardDoneToolbar()
     }
 
     // ─ Company ───────────────────────────────────────────────

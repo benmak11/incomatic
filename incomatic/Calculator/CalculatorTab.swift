@@ -75,22 +75,9 @@ struct CalculatorTab: View {
                     onScrollDirectionChange(false)   // scrolling up — expand
                 }
             }
-            .toolbar {
-                // .decimalPad has no return key. Add a Done button above the keypad
-                // so users can dismiss it after entering amounts. Applies to every
-                // numeric field in every section because the ScrollView wraps them all.
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Done") {
-                        UIApplication.shared.sendAction(
-                            #selector(UIResponder.resignFirstResponder),
-                            to: nil, from: nil, for: nil
-                        )
-                    }
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color.incText)
-                }
-            }
+            // .decimalPad has no return key. One Done bar for the whole screen —
+            // every section's numeric fields share this ScrollView's hosting context.
+            .keyboardDoneToolbar()
             .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { keyboardVisible = true }
             }
