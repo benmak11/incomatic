@@ -41,6 +41,7 @@ private struct BudgetSectionHeader: View {
                         .background(Circle().fill(Color.incSurface))
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Back")
                 Spacer()
             }
             .padding(.bottom, 10)

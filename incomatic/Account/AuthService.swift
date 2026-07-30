@@ -34,6 +34,10 @@ nonisolated final class AuthService {
         case invalidURL
         case network(Error)
         case invalidResponse
+        /// 401 — expired/invalid session token (deleteAccount) or a rejected Apple
+        /// identity token (signInWithApple). Same mapping EquityService,
+        /// BudgetService and CalculationHistoryService use for their authed calls.
+        case notAuthenticated
         case server(Int, String)
         case decoding(Error)
 
@@ -42,6 +46,7 @@ nonisolated final class AuthService {
             case .invalidURL:            return "Invalid API URL"
             case .network(let e):        return "Network error: \(e.localizedDescription)"
             case .invalidResponse:       return "Invalid response from server"
+            case .notAuthenticated:      return "Sign-in session invalid or expired"
             case .server(let code, let m):
                 return "Sign-in failed (HTTP \(code)): \(m)"
             case .decoding(let e):       return "Failed to decode response: \(e.localizedDescription)"
@@ -69,12 +74,7 @@ nonisolated final class AuthService {
         } catch {
             throw AuthError.network(error)
         }
-
-        guard let http = response as? HTTPURLResponse else { throw AuthError.invalidResponse }
-        guard (200...299).contains(http.statusCode) else {
-            let message = String(data: data, encoding: .utf8) ?? "Server returned \(http.statusCode)"
-            throw AuthError.server(http.statusCode, message)
-        }
+        try validate(response, data: data)
 
         do {
             return try JSONDecoder().decode(AppleSignInResponseBody.self, from: data)
@@ -97,12 +97,17 @@ nonisolated final class AuthService {
         } catch {
             throw AuthError.network(error)
         }
+        try validate(response, data: data)
+    }
 
+    /// Shared status-code check for both endpoints in this file: not-2xx and not a
+    /// decode concern, just translating the HTTP status into the right AuthError.
+    private func validate(_ response: URLResponse, data: Data) throws {
         guard let http = response as? HTTPURLResponse else { throw AuthError.invalidResponse }
-        guard (200...299).contains(http.statusCode) else {
-            let message = String(data: data, encoding: .utf8) ?? "Server returned \(http.statusCode)"
-            throw AuthError.server(http.statusCode, message)
-        }
+        if (200...299).contains(http.statusCode) { return }
+        if http.statusCode == 401 { throw AuthError.notAuthenticated }
+        let message = String(data: data, encoding: .utf8) ?? "Server returned \(http.statusCode)"
+        throw AuthError.server(http.statusCode, message)
     }
 }
 
