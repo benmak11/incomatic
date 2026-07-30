@@ -72,6 +72,7 @@ struct OnboardingNotebookView: View {
                             .foregroundColor(.incTextMute)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Back")
                 }
                 ZStack {
                     Circle().fill(Color.incSage).frame(width: 30, height: 30)

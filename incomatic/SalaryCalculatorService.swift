@@ -272,11 +272,24 @@ class SalaryCalculatorService {
         guard let url = URL(string: "\(baseURL)/v1/countries/US/states") else {
             throw APIError.invalidURL
         }
-        let (data, response) = try await URLSession.shared.data(from: url)
-        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await URLSession.shared.data(from: url)
+        } catch {
+            throw APIError.networkError(error)
+        }
+        guard let http = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
         }
-        return try JSONDecoder().decode([StateEntry].self, from: data)
+        guard (200...299).contains(http.statusCode) else {
+            let message = String(data: data, encoding: .utf8) ?? "Server returned \(http.statusCode)"
+            throw APIError.serverError(message)
+        }
+        do {
+            return try JSONDecoder().decode([StateEntry].self, from: data)
+        } catch {
+            throw APIError.decodingError(error)
+        }
     }
 
     func calculateSalary(

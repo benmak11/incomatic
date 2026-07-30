@@ -75,7 +75,14 @@ nonisolated final class CalculationHistoryService {
         guard let http = response as? HTTPURLResponse else {
             throw HistoryError.network(NSError(domain: "history", code: -2))
         }
-        guard (200...299).contains(http.statusCode) else {
+        switch http.statusCode {
+        case 200...299:
+            break
+        case 401:
+            // /v1/calculations is 401-when-anonymous per the backend contract — same
+            // mapping EquityService and BudgetService use for their authed endpoints.
+            throw HistoryError.notAuthenticated
+        default:
             let message = String(data: data, encoding: .utf8) ?? "Unexpected status"
             throw HistoryError.server(http.statusCode, message)
         }
