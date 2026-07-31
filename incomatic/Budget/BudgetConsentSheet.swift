@@ -35,7 +35,7 @@ struct BudgetConsentSheet: View {
                 .multilineTextAlignment(.center)
                 .padding(.bottom, 10)
 
-            Text("To put together a paycheck-by-paycheck plan, we send your financial inputs — including the amounts you've typed in — to Google's AI. Nothing is shared beyond generating this plan.")
+            Text("To put together a paycheck-by-paycheck plan, we send your financial inputs (including the amounts you've typed in) to Google's AI. Nothing is shared beyond generating this plan.")
                 .font(.system(size: 13.5))
                 .foregroundColor(.incTextDim)
                 .lineSpacing(4)

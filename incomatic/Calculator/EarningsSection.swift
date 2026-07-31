@@ -128,12 +128,12 @@ struct EarningsSection: View {
         guard let year = bonusStartYear, year != AppConfig.taxYear else { return nil }
         if state.bonusRecurring {
             return year > AppConfig.taxYear
-                ? "Starts in \(String(year)) — repeats every year after."
+                ? "Starts in \(String(year)), repeats every year after."
                 : nil
         }
         return year > AppConfig.taxYear
-            ? "Lands in \(String(year)) — shown in your yearly outlook, not this year's paycheck."
-            : "Landed in \(String(year)) — not in this year's paycheck."
+            ? "Lands in \(String(year)). Shown in your yearly outlook, not this year's paycheck."
+            : "Landed in \(String(year)), not in this year's paycheck."
     }
 
     private func inclusionNote(_ text: String) -> some View {

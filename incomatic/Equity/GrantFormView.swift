@@ -88,7 +88,7 @@ struct GrantFormView: View {
 
                 if !manualMode {
                     CalculatorFields.fieldLabel("TICKER OR COMPANY")
-                    TextField("Search — AAPL, Apple…", text: $searchQuery)
+                    TextField("Search: AAPL, Apple…", text: $searchQuery)
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.incText)
                         .textInputAutocapitalization(.characters)
@@ -98,7 +98,7 @@ struct GrantFormView: View {
                         .padding(.bottom, 10)
 
                     if lookupUnavailable {
-                        notice("Stock lookup unavailable — enter price manually", color: .incBlush)
+                        notice("Stock lookup unavailable. Enter price manually", color: .incBlush)
                     }
 
                     ForEach(searchResults) { result in

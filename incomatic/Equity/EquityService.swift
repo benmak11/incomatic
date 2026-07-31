@@ -31,7 +31,7 @@ nonisolated final class EquityService {
             switch self {
             case .invalidURL:         return "Invalid equity URL"
             case .notAuthenticated:   return "Sign in to sync RSU grants"
-            case .lookupUnavailable:  return "Stock lookup unavailable — enter price manually"
+            case .lookupUnavailable:  return "Stock lookup unavailable. Enter price manually"
             case .unknownSymbol:      return "Unknown ticker symbol"
             case .network(let e):     return e.localizedDescription
             case .server(let c, let m): return "HTTP \(c): \(m)"

@@ -79,7 +79,7 @@ final class AccountManager: ObservableObject {
                 return
             }
             guard let rawNonce = pendingNonce else {
-                errorMessage = "Missing sign-in nonce — try again"
+                errorMessage = "Missing sign-in nonce, try again"
                 return
             }
 

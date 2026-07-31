@@ -150,7 +150,7 @@ struct CalculatorTab: View {
             HStack(spacing: 8) {
                 Image(systemName: "arrow.triangle.2.circlepath")
                     .font(.system(size: 12, weight: .bold))
-                Text("Inputs changed — recalculate to update your results")
+                Text("Inputs changed, recalculate to update your results")
                     .font(.system(size: 12.5, weight: .semibold))
             }
             .foregroundColor(.incSageDeep)
