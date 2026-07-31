@@ -79,7 +79,7 @@ final class BudgetStore: ObservableObject {
             try await service.deleteBudget()
         } catch {
             budget = previous
-            errorMessage = "Couldn't delete budget — restored"
+            errorMessage = "Couldn't delete budget, restored"
         }
     }
 

@@ -19,7 +19,7 @@ struct PaycheckTimelineView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Some paychecks run tighter than others — bigger windfalls widen the bar, tighter weeks shrink it.")
+            Text("Some paychecks run tighter than others. Bigger windfalls widen the bar, tighter weeks shrink it.")
                 .font(.system(size: 13))
                 .foregroundColor(.incTextDim)
                 .padding(.horizontal, 16)

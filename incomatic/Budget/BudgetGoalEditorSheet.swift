@@ -69,7 +69,7 @@ struct BudgetGoalEditorSheet: View {
 
             CalculatorFields.amountField(label: "Target amount", text: $targetText)
 
-            CalculatorFields.toggleRow("Target date", sub: "Optional — used to flag if you're on pace", isOn: $hasTargetDate)
+            CalculatorFields.toggleRow("Target date", sub: "Optional: used to flag if you're on pace", isOn: $hasTargetDate)
                 .padding(.bottom, hasTargetDate ? 8 : 18)
 
             if hasTargetDate {

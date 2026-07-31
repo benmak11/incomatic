@@ -25,7 +25,7 @@ struct InsightsBudgetCTACard: View {
 
             Text(hasExistingBudget
                  ? "See how this paycheck fits your goals and expenses."
-                 : "Add your expenses and savings goals — we'll build a paycheck-by-paycheck budget.")
+                 : "Add your expenses and savings goals. We'll build a paycheck-by-paycheck budget.")
                 .font(.system(size: 13.5))
                 .foregroundColor(.incTextDim)
                 .lineSpacing(3)

@@ -127,7 +127,7 @@ struct EquityCardView: View {
                         Image(systemName: "info.circle")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(.incBlush)
-                        Text("Using your override — clear it to value grants automatically.")
+                        Text("Using your override, clear it to value grants automatically.")
                             .font(.system(size: 12))
                             .foregroundColor(.incTextDim)
                     }

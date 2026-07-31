@@ -85,7 +85,7 @@ final class EquityStore: ObservableObject {
             try await service.deleteGrant(id: id)
         } catch {
             grants.insert(removed, at: min(idx, grants.count))
-            errorMessage = "Couldn't delete grant — restored"
+            errorMessage = "Couldn't delete grant, restored"
         }
     }
 

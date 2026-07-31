@@ -247,7 +247,7 @@ struct YearlyOutlookView: View {
                 : "Bonus shown once, in its payout year.")
         }
         if hasRsuAnywhere {
-            clauses.append("RSU value uses today's price for every future vest — actual value will differ.")
+            clauses.append("RSU value uses today's price for every future vest. Actual value will differ.")
         }
         clauses.append("All figures gross, before taxes and deductions.")
         return Text(clauses.joined(separator: " "))

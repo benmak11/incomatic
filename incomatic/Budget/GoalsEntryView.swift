@@ -31,7 +31,7 @@ struct GoalsEntryView: View {
         VStack(spacing: 0) {
             AppSectionHeader(title: "What are you saving for?")
 
-            Text("Pick as many as you'd like — there's no limit on goals.")
+            Text("Pick as many as you'd like, there's no limit on goals.")
                 .font(.system(size: 13.5))
                 .foregroundColor(.incTextDim)
                 .padding(.horizontal, 26)
@@ -102,7 +102,7 @@ struct GoalsEntryView: View {
             Text("Add your first goal")
                 .font(.system(size: 20, weight: .medium, design: .serif))
                 .foregroundColor(.incText)
-            Text("Tap a category above, then set an amount — we'll fold it into your paycheck plan.")
+            Text("Tap a category above, then set an amount. We'll fold it into your paycheck plan.")
                 .font(.system(size: 13.5))
                 .foregroundColor(.incTextDim)
                 .multilineTextAlignment(.center)
