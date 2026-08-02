@@ -20,59 +20,59 @@ struct CalculatorTab: View {
     @ObservedObject var equityStore: EquityStore
     @Bindable var state: CalculatorState
     let onShowAccount: () -> Void
-    /// Reports scroll direction so the shell's floating pill nav can shrink
-    /// out of the way while filling out a long section, like the native
-    /// tab bar's onScrollDown minimize behavior.
-    var onScrollDirectionChange: (Bool) -> Void = { _ in }
+    /// The shell's active tab — threaded through so the embedded pill nav in
+    /// CalculatorBottomDock can switch tabs, same as the shell's own floating
+    /// AppPillNav does for Insights/History.
+    @Binding var tab: MainTab
     @State private var showGrantsSheet = false
     @State private var keyboardVisible = false
-    @State private var scrollProgress: CGFloat = 0   // 0 at top → 1 at bottom
 
     var body: some View {
       NavigationStack {
-        ZStack(alignment: .bottom) {
-            Color.incBg.ignoresSafeArea()
+        let preview = livePreview(state: state)
+        VStack(spacing: 0) {
+            AppSectionHeader(
+                title: "Calculator",
+                section: $state.activeSection,
+                payFrequency: state.payFrequency,
+                projectedPerPeriod: preview.perPeriod
+            )
 
             ScrollView {
                 VStack(spacing: 0) {
-                    AppSectionHeader(title: "Calculator", section: $state.activeSection)
-
-                    VStack(spacing: 0) {
-                        switch state.activeSection {
-                        case .earnings: EarningsSection(
-                            state: state,
-                            equity: equityStore,
-                            signedIn: accountManager.isSignedIn,
-                            onOpenGrants: { showGrantsSheet = true },
-                            onShowAccount: onShowAccount
-                        )
-                        case .federal:  FederalSection(state: state)
-                        case .state:    StateSection(state: state)
-                        case .benefits: BenefitsSection(state: state)
-                        }
+                    switch state.activeSection {
+                    case .earnings: EarningsSection(
+                        state: state,
+                        equity: equityStore,
+                        signedIn: accountManager.isSignedIn,
+                        onOpenGrants: { showGrantsSheet = true },
+                        onShowAccount: onShowAccount
+                    )
+                    case .federal:  FederalSection(state: state)
+                    case .state:    StateSection(state: state)
+                    case .benefits: BenefitsSection(state: state)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 210)   // sticky CTA + floating pill-nav clearance
-                    .id(state.activeSection)  // re-mount for animation
-                    .transition(.opacity.combined(with: .offset(y: 8)))
                 }
+                .padding(.horizontal, 16)
+                .id(state.activeSection)  // re-mount for animation
+                .transition(.opacity.combined(with: .offset(y: 8)))
             }
             .scrollDismissesKeyboard(.interactively)
-            .onScrollGeometryChange(for: CGFloat.self) { geo in
-                let scrollable = geo.contentSize.height - geo.containerSize.height
-                // Non-scrollable section = whole form already visible = fully revealed.
-                guard scrollable > 0 else { return 1 }
-                let offsetY = geo.contentOffset.y + geo.contentInsets.top
-                return min(max(offsetY / scrollable, 0), 1)
-            } action: { old, progress in
-                // No withAnimation: opacity must track the finger frame-by-frame.
-                scrollProgress = progress
-                if progress <= 0.02 {
-                    onScrollDirectionChange(false)   // back at the top — always expanded
-                } else if progress > old + 0.004 {
-                    onScrollDirectionChange(true)    // scrolling down — shrink
-                } else if progress < old - 0.004 {
-                    onScrollDirectionChange(false)   // scrolling up — expand
+            .safeAreaInset(edge: .bottom) {
+                // Hidden only while the keyboard is up so it doesn't crowd the
+                // field being edited. safeAreaInset auto-reserves exactly the
+                // space this view needs, so scroll content never needs a
+                // hand-tuned bottom-padding guess.
+                if !keyboardVisible {
+                    CalculatorBottomDock(
+                        activeSection: $state.activeSection,
+                        tab: $tab,
+                        isLoading: viewModel.isLoading,
+                        canCalculate: state.canCalculate,
+                        needsRecalculation: state.needsRecalculation,
+                        onCalculate: triggerCalculation
+                    )
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
             // .decimalPad has no return key. One Done bar for the whole screen —
@@ -84,30 +84,8 @@ struct CalculatorTab: View {
             .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { keyboardVisible = false }
             }
-
-            // Sticky CTA: always pinned above the tab bar; hidden only while the keyboard
-            // is up so it doesn't crowd the field being edited.
-            if !keyboardVisible {
-                let preview = livePreview(state: state)
-                VStack(spacing: 8) {
-                if state.needsRecalculation && state.canCalculate {
-                    recalcNudge
-                }
-                StickyProgressCTA(
-                    activeSection: $state.activeSection,
-                    isLoading: viewModel.isLoading,
-                    canCalculate: state.canCalculate,
-                    payFrequency: state.payFrequency,
-                    projectedPerPeriod: preview.perPeriod,
-                    projectedPct: preview.pctOfGross,
-                    onCalculate: triggerCalculation,
-                    scrollProgress: scrollProgress
-                )
-                }
-                .padding(.bottom, 96)   // float above the pill nav
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
         }
+        .background(Color.incBg.ignoresSafeArea())
         .sheet(isPresented: $showGrantsSheet) {
             GrantsSheet(store: equityStore, onChanged: syncGrantDerivedRsu)
         }
@@ -143,24 +121,6 @@ struct CalculatorTab: View {
         if viewModel.calculationResult != nil {
             state.needsRecalculation = true
         }
-    }
-
-    private var recalcNudge: some View {
-        Button(action: triggerCalculation) {
-            HStack(spacing: 8) {
-                Image(systemName: "arrow.triangle.2.circlepath")
-                    .font(.system(size: 12, weight: .bold))
-                Text("Inputs changed, recalculate to update your results")
-                    .font(.system(size: 12.5, weight: .semibold))
-            }
-            .foregroundColor(.incSageDeep)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 9)
-            .background(Capsule().fill(Color.incSageBg))
-            .overlay(Capsule().strokeBorder(Color.incSage.opacity(0.35), lineWidth: 1))
-        }
-        .buttonStyle(.plain)
-        .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
     private func loadStatesFromApi() async {

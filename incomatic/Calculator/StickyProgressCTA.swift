@@ -5,9 +5,11 @@
 //
 //  Created by Ben Makusha on 05/28/2026
 //
-//  Sticky overlay above the tab bar with live projection ribbon + button row.
-//  On non-final sections the primary button advances to next; on the final section
-//  it flips to "Calculate detailed projection".
+//  Button row for the Calculator tab's bottom dock. On non-final sections
+//  the primary button advances to next; on the final section it flips to
+//  "Calculate detailed projection". The live projection number that used
+//  to live in this view's own ribbon now lives in the sticky
+//  AppSectionHeader instead (see CalculatorBottomDock.swift).
 //
 
 import SwiftUI
@@ -16,11 +18,7 @@ struct StickyProgressCTA: View {
     @Binding var activeSection: CalculatorSection
     let isLoading: Bool
     let canCalculate: Bool
-    let payFrequency: PayFrequency
-    let projectedPerPeriod: Double?
-    let projectedPct: Double?
     let onCalculate: () -> Void
-    let scrollProgress: CGFloat
 
     private var idx: Int { CalculatorSection.allCases.firstIndex(of: activeSection) ?? 0 }
     private var isLast: Bool { idx == CalculatorSection.allCases.count - 1 }
@@ -28,17 +26,9 @@ struct StickyProgressCTA: View {
         let all = CalculatorSection.allCases
         return idx + 1 < all.count ? all[idx + 1] : nil
     }
-    
-    private var pillOpacity: CGFloat {
-        let minOpacity: CGFloat = 0.45
-        return minOpacity + (1 - minOpacity) * scrollProgress
-    }
 
     var body: some View {
-        VStack(spacing: 0) {
-            ribbon
-            buttonRow
-        }
+        buttonRow
         .background(Color.incSurface)
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay(
@@ -47,35 +37,6 @@ struct StickyProgressCTA: View {
         .shadow(color: Color.black.opacity(0.10), radius: 24, x: 0, y: 6)
         .shadow(color: Color.black.opacity(0.03), radius: 2, x: 0, y: 1)
         .padding(.horizontal, 14)
-    }
-
-    private var ribbon: some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("PROJECTED · PER \(payFrequency.displayName.uppercased())")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.incSageDeep)
-                    .kerning(0.6)
-                if let pct = projectedPct {
-                    Text("\(String(format: "%.1f", pct))% of gross")
-                        .font(.system(size: 11.5))
-                        .foregroundColor(.incTextDim)
-                } else {
-                    Text("Enter earnings to preview")
-                        .font(.system(size: 11.5))
-                        .foregroundColor(.incTextDim)
-                }
-            }
-            Spacer()
-            Text(projectedPerPeriod.map(formatCurrency) ?? "$0.00")
-                .font(.system(size: 19, weight: .bold))
-                .foregroundColor(.incSageDeep)
-                .kerning(-0.4)
-        }
-        .padding(.horizontal, 16).padding(.vertical, 12)
-        .background(Color.incSageBg)
-        .overlay(Rectangle().fill(Color.incHairline).frame(height: 1), alignment: .bottom)
-        .opacity(pillOpacity)   // projection ribbon fades with scroll; buttons stay opaque
     }
 
     private var buttonRow: some View {

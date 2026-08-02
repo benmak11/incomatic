@@ -38,11 +38,13 @@ enum CalculatorFields {
             fieldLabel(label.uppercased(), suffix: suffix)
             HStack(spacing: 8) {
                 Text("$").font(.system(size: 18, weight: .semibold)).foregroundColor(.incTextMute)
-                TextField(placeholder, text: currencyBinding(text))
-                    .keyboardType(.decimalPad)
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundColor(.incText)
-                    .kerning(-0.3)
+                // A plain TextField + formatted Binding doesn't push the
+                // grouped value back into the native UITextField while it's
+                // still focused (confirmed interactively — see
+                // FormattedCurrencyField.swift's doc comment). This wraps a
+                // real UITextField so the comma grouping updates live, not
+                // just after the field loses focus.
+                FormattedCurrencyField(text: text, placeholder: placeholder)
             }
             .padding(.bottom, 8)
             .overlay(Rectangle().fill(Color.incHairline).frame(height: 2), alignment: .bottom)
@@ -63,6 +65,7 @@ enum CalculatorFields {
                 .foregroundColor(.incText)
                 .padding(.bottom, 8)
                 .overlay(Rectangle().fill(Color.incHairline).frame(height: 2), alignment: .bottom)
+                .transaction { $0.disablesAnimations = true }
         }
         .padding(.bottom, 18)
     }
@@ -70,19 +73,11 @@ enum CalculatorFields {
     // MARK: - Input sanitizing / formatting
     //
     // The underlying @Observable state always stores a RAW numeric string (no
-    // grouping separators) so `Double(state.x)` keeps working everywhere. These
-    // bindings reformat only the *displayed* text:
-    //   • currency  → digits + a single ".", max 2 decimals, live "1,234.56" grouping
-    //   • whole     → digits only (hours, allowances)
-
-    /// Display binding for `$`-prefixed currency fields. Stores raw (un-grouped),
-    /// shows thousands separators while typing.
-    static func currencyBinding(_ source: Binding<String>) -> Binding<String> {
-        Binding(
-            get: { groupCurrency(source.wrappedValue) },
-            set: { source.wrappedValue = sanitizeCurrency($0) }
-        )
-    }
+    // grouping separators) so `Double(state.x)` keeps working everywhere.
+    //   • currency  → digits + a single ".", max 2 decimals, live "1,234.56"
+    //     grouping — applied by FormattedCurrencyField's UITextFieldDelegate,
+    //     not a Binding (see that file's doc comment for why).
+    //   • whole     → digits only (hours, allowances), via wholeNumberBinding below.
 
     /// Display binding for whole-number fields (hours, allowances).
     static func wholeNumberBinding(_ source: Binding<String>) -> Binding<String> {
