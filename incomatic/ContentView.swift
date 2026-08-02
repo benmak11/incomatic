@@ -101,7 +101,7 @@ struct ContentView: View {
                         equityStore: equityStore,
                         state: calculatorState,
                         onShowAccount: { showingAccountSheet = true },
-                        onScrollDirectionChange: { down in pillNavCompact = down }
+                        tab: $selectedTab
                     )
                 case .insights:
                     InsightsTab(
@@ -126,7 +126,13 @@ struct ContentView: View {
                 }
             }
 
-            AppPillNav(tab: $selectedTab, compact: pillNavCompact, onExpandTap: { pillNavCompact = false })
+            // Calculator embeds its own copy of AppPillNav inside
+            // CalculatorBottomDock (combined with the CTA, to fix the
+            // overlap this floating copy used to cause there); this
+            // floating instance now only serves Insights/History.
+            if selectedTab != .calculator {
+                AppPillNav(tab: $selectedTab, compact: pillNavCompact, onExpandTap: { pillNavCompact = false })
+            }
         }
         .overlay(alignment: .topTrailing) {
             AccountGlyph(

@@ -97,14 +97,34 @@ struct AppPillNav: View {
 }
 
 /// Serif page title + optional hairline section tabs (the "Quiet Ledger" chrome).
+/// `payFrequency`/`projectedPerPeriod` add a right-aligned live per-paycheck
+/// figure beside the title — used by the Calculator tab so the number stays
+/// visible while the header is pinned above the scroll content, instead of
+/// living only in a floating bottom CTA.
 struct AppSectionHeader: View {
     let title: String
     var section: Binding<CalculatorSection>? = nil
+    var payFrequency: PayFrequency? = nil
+    var projectedPerPeriod: Double? = nil
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(title)
-                .font(.system(size: 34, weight: .medium, design: .serif))
-                .foregroundColor(.incText).kerning(-1)
+            HStack(alignment: .lastTextBaseline) {
+                Text(title)
+                    .font(.system(size: 34, weight: .medium, design: .serif))
+                    .foregroundColor(.incText).kerning(-1)
+                if let payFrequency {
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("PER \(payFrequency.displayName.uppercased())")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.incTextMute)
+                            .kerning(0.5)
+                        Text(projectedPerPeriod.map(formatCurrency) ?? "—")
+                            .font(.system(size: 20, weight: .medium, design: .serif))
+                            .foregroundColor(.incSageDeep)
+                    }
+                }
+            }
             if let section {
                 HStack(spacing: 22) {
                     ForEach(CalculatorSection.allCases, id: \.self) { s in
