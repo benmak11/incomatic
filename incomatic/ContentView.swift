@@ -10,9 +10,11 @@
 //  AccountSheet, and routes to Insights when a calculation completes.
 //
 
+import StoreKit
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(\.requestReview) private var requestReview
     @StateObject private var locationManager = LocationManager()
     @StateObject private var viewModel = SalaryCalculatorViewModel()
     @StateObject private var accountManager = AccountManager()
@@ -68,6 +70,9 @@ struct ContentView: View {
                         await historyViewModel.load()
                         showToast("Saved to History")
                     }
+                }
+                if ReviewPromptManager.recordSuccessfulCalculation() {
+                    requestReview()
                 }
             }
         }
