@@ -122,6 +122,9 @@ struct RootView: View {
                     .zIndex(1)
             }
         }
+        // Runs once per launch, behind the splash, so the newest published tax
+        // year is cached before the first calculation is built.
+        .task { await refreshTaxYear() }
     }
 }
 

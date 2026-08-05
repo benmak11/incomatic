@@ -268,6 +268,38 @@ class SalaryCalculatorService {
         var id: String { code }
     }
 
+    struct TaxYearsResponse: Codable {
+        let country: String
+        let supportedTaxYears: [Int]
+        /// Newest year with a published rule pack. Null when the backend has
+        /// none for the country at all.
+        let defaultTaxYear: Int?
+    }
+
+    func fetchTaxYears(country: String = "US") async throws -> TaxYearsResponse {
+        guard let url = URL(string: "\(baseURL)/v1/tax-years?country=\(country)") else {
+            throw APIError.invalidURL
+        }
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await URLSession.shared.data(from: url)
+        } catch {
+            throw APIError.networkError(error)
+        }
+        guard let http = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        guard (200...299).contains(http.statusCode) else {
+            let message = String(data: data, encoding: .utf8) ?? "Server returned \(http.statusCode)"
+            throw APIError.serverError(message)
+        }
+        do {
+            return try JSONDecoder().decode(TaxYearsResponse.self, from: data)
+        } catch {
+            throw APIError.decodingError(error)
+        }
+    }
+
     func fetchUSStates() async throws -> [StateEntry] {
         guard let url = URL(string: "\(baseURL)/v1/countries/US/states") else {
             throw APIError.invalidURL

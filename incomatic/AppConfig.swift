@@ -13,9 +13,36 @@
 import Foundation
 
 nonisolated enum AppConfig {
+    private static let taxYearKey = "incomatic.taxYear"
+
+    /// Newest tax year known to exist when this build shipped, used until the
+    /// backend's supported-years list has been fetched at least once.
+    ///
+    /// Deliberately *not* derived from the current date. The backend throws when
+    /// asked for a year it has no rule pack for, so rolling forward on January 1
+    /// would break every calculation until that year's pack was published.
+    /// Erring backwards costs one stale year; erring forwards costs the app.
+    static let fallbackTaxYear = 2026
+
     /// Tax year every calculation runs against. Single source of truth for the
     /// request builder, the bonus payout-date captions, and the earnings outlook.
-    static let taxYear = 2025
+    ///
+    /// Resolved from the backend's `defaultTaxYear` (see `refreshTaxYear()`) and
+    /// cached across launches, so a newly published rule pack takes effect
+    /// without shipping an app update. Read synchronously because most callers
+    /// are SwiftUI view bodies and pure value math; the refresh happens once at
+    /// launch and the value is stable for the session.
+    static var taxYear: Int {
+        let cached = UserDefaults.standard.integer(forKey: taxYearKey)
+        return cached > 0 ? cached : fallbackTaxYear
+    }
+
+    /// Stores the backend's newest supported tax year. Ignores non-positive
+    /// values so a malformed payload can't wipe a good cached year.
+    static func cacheTaxYear(_ year: Int) {
+        guard year > 0 else { return }
+        UserDefaults.standard.set(year, forKey: taxYearKey)
+    }
 
     /// Loopback URL used when running the salary-calculator backend locally.
     static let localBaseURL = "http://localhost:8080"
