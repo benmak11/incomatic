@@ -18,12 +18,12 @@ final class EquityServiceTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        URLProtocol.registerClass(StubURLProtocol.self)
+        StubURLProtocol.install()
         service = EquityService()
     }
 
     override func tearDown() {
-        URLProtocol.unregisterClass(StubURLProtocol.self)
+        StubURLProtocol.uninstall()
         StubURLProtocol.stub = nil
         service = nil
         super.tearDown()

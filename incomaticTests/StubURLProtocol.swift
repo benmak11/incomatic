@@ -2,14 +2,18 @@
 //  StubURLProtocol.swift
 //  incomaticTests
 //
-//  Test-only URLProtocol stub. Intercepts every request made through
-//  URLSession.shared (which is how all 5 network services in incomatic/ are
-//  hard-coded — none take an injected URLSession) so the decode/error paths
-//  of those services can be exercised without hitting the network or
-//  refactoring production code to add a DI seam.
+//  Test-only URLProtocol stub. All 5 network services route through
+//  APISession, so the decode/error paths can be exercised without hitting the
+//  network by swapping APISession.session for one whose configuration carries
+//  this class.
+//
+//  `URLProtocol.registerClass` is NOT enough on its own: it only affects
+//  URLSession.shared, and a session built from its own configuration reads
+//  configuration.protocolClasses instead. Call `install()` / `uninstall()`.
 //
 
 import Foundation
+@testable import Incomatic
 
 final class StubURLProtocol: URLProtocol {
     struct Stub {
@@ -54,4 +58,17 @@ final class StubURLProtocol: URLProtocol {
     }
 
     override func stopLoading() {}
+}
+
+extension StubURLProtocol {
+    /// Point `APISession` at a session this class can intercept.
+    static func install() {
+        APISession.session = APISession.makeSession(protocolClasses: [StubURLProtocol.self])
+    }
+
+    /// Restore the real session so a later test cannot inherit the stub.
+    static func uninstall() {
+        stub = nil
+        APISession.session = APISession.makeSession()
+    }
 }
