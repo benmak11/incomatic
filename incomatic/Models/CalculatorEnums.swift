@@ -10,7 +10,7 @@
 
 import Foundation
 
-enum PayFrequency: String, CaseIterable {
+enum PayFrequency: String, CaseIterable, Codable {
     case daily, weekly, biweekly, semiMonthly, monthly, quarterly, semiAnnual, annual
 
     var displayName: String {
@@ -51,7 +51,7 @@ enum PayFrequency: String, CaseIterable {
     }
 }
 
-enum FilingStatus: String, CaseIterable {
+enum FilingStatus: String, CaseIterable, Codable {
     case single, marriedJoint, headOfHousehold
     var displayName: String {
         switch self {
@@ -81,7 +81,7 @@ enum CalculatorSection: String, CaseIterable {
     }
 }
 
-enum IncomeType: String, CaseIterable {
+enum IncomeType: String, CaseIterable, Codable {
     case salary, hourly
     var displayName: String {
         switch self {
@@ -91,7 +91,7 @@ enum IncomeType: String, CaseIterable {
     }
 }
 
-enum SalaryBasis: String, CaseIterable {
+enum SalaryBasis: String, CaseIterable, Codable {
     case perYear, perPeriod
     var displayName: String {
         switch self {
@@ -107,7 +107,7 @@ enum SalaryBasis: String, CaseIterable {
     }
 }
 
-struct CustomDeduction: Identifiable {
+struct CustomDeduction: Identifiable, Codable, Equatable {
     var id = UUID()
     var name: String = ""
     var amount: String = ""
