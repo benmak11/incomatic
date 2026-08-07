@@ -12,6 +12,16 @@
 import SwiftUI
 
 struct AccountGlyph: View {
+    static let diameter: CGFloat = 38
+
+    /// Gap between the glyph and the screen's trailing edge, applied by the host.
+    static let trailingInset: CGFloat = 20
+
+    /// Total width the floating glyph claims from the trailing edge. It is an
+    /// overlay on the whole shell, so anything a header right-aligns into the same
+    /// corner has to reserve this much or the glyph lands on top of it.
+    static var reservedTrailingWidth: CGFloat { diameter + trailingInset }
+
     let signedIn: Bool
     let user: AccountUser?
     let action: () -> Void
@@ -33,7 +43,7 @@ struct AccountGlyph: View {
                         .foregroundColor(.incTextDim)
                 }
             }
-            .frame(width: 38, height: 38)
+            .frame(width: Self.diameter, height: Self.diameter)
             .shadow(color: signedIn ? Color.incSage.opacity(0.32) : Color.black.opacity(0.04),
                     radius: signedIn ? 8 : 2,
                     x: 0,
