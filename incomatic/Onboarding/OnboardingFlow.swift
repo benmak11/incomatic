@@ -30,7 +30,15 @@ final class OnboardingFlow {
     var isReview: Bool { step == .review }
     var progress: Double { Double(stepIndex) / Double(steps.count - 1) }
 
-    func next() { stepIndex = min(steps.count - 1, stepIndex + 1) }
+    func next() {
+        stepIndex = min(steps.count - 1, stepIndex + 1)
+        // Tracked here rather than in the view: this is the single place the flow
+        // advances, so no future entry point can skip the funnel event.
+        Task { @MainActor in
+            Analytics.shared.track(AnalyticsEventName.onboardingStep,
+                                   properties: ["step": String(describing: steps[stepIndex])])
+        }
+    }
     func back() { stepIndex = max(0, stepIndex - 1) }
     func jump(to target: OnboardingStep) {
         if let i = steps.firstIndex(of: target) { stepIndex = i }

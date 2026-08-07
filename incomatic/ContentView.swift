@@ -71,6 +71,8 @@ struct ContentView: View {
                         showToast("Saved to History")
                     }
                 }
+                Analytics.shared.track(AnalyticsEventName.calculationCompleted,
+                                      properties: calculationProperties())
                 if ReviewPromptManager.recordSuccessfulCalculation() {
                     requestReview()
                 }
@@ -78,6 +80,14 @@ struct ContentView: View {
         }
         .onChange(of: selectedTab) { _, _ in
             pillNavCompact = false
+        }
+        .onAppear {
+            // Signed-in batches get attributed to an accountId server-side; signed-out
+            // ones still arrive, keyed on deviceId, which is what keeps the top of the
+            // funnel visible.
+            Analytics.shared.sessionTokenProvider = { [weak accountManager] in
+                accountManager?.sessionToken
+            }
         }
         .onChange(of: accountManager.isSignedIn) { _, signedIn in
             if signedIn {
@@ -146,7 +156,7 @@ struct ContentView: View {
                 action: { showingAccountSheet = true }
             )
             .padding(.top, 8)
-            .padding(.trailing, 20)
+            .padding(.trailing, AccountGlyph.trailingInset)
         }
         .overlay(alignment: .bottom) {
             if let toastMessage {
@@ -162,7 +172,24 @@ struct ContentView: View {
     /// spinner — we land there and flip isLoading on synchronously so the first
     /// render is the spinner, not a flash of the empty Calculator tab (or the
     /// Insights empty state) before the result routes over.
+    /// Bucketed only. The client cannot pass a `Double` to `track`, and the
+    /// backend rejects amount-bearing keys that are not strings, so a raw salary
+    /// has to get past two independent guards to reach the analytics store.
+    private func calculationProperties() -> [String: String] {
+        var properties: [String: String] = [
+            "state": calculatorState.selectedStateCode,
+            "filing_status": String(describing: calculatorState.filingStatus),
+            "pay_frequency": String(describing: calculatorState.payFrequency),
+            "signed_in": accountManager.isSignedIn ? "true" : "false",
+        ]
+        if let net = viewModel.calculationResult?.netPay.perPayPeriod {
+            properties["net_pay_bucket"] = Analytics.bucket(net)
+        }
+        return properties
+    }
+
     private func finishOnboarding() {
+        Analytics.shared.track(AnalyticsEventName.onboardingCompleted)
         hasCompletedOnboarding = true
         selectedTab = .insights
         viewModel.isLoading = true

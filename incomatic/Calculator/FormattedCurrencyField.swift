@@ -33,6 +33,10 @@ struct FormattedCurrencyField: UIViewRepresentable {
             attributes: [.foregroundColor: UIColor(Color.incTextMute)]
         )
         field.delegate = context.coordinator
+        // .decimalPad has no return key, and SwiftUI's .toolbar(placement: .keyboard)
+        // does NOT reach a UITextField inside a UIViewRepresentable — it only decorates
+        // SwiftUI's own text input. Without this the pad covers the CTA with no way out.
+        field.inputAccessoryView = Self.makeDoneBar(for: field)
         field.text = CalculatorFields.groupCurrency(text)
         field.addTarget(context.coordinator, action: #selector(Coordinator.editingChanged), for: .editingChanged)
         return field
@@ -51,6 +55,39 @@ struct FormattedCurrencyField: UIViewRepresentable {
 
     func makeCoordinator() -> Coordinator {
         Coordinator(text: $text)
+    }
+
+    /// Matches the SwiftUI `.keyboardDoneToolbar()` used by the plain numeric fields, so
+    /// the two mechanisms look like one control to the user. They never appear together:
+    /// each decorates only the field type it belongs to.
+    private static func makeDoneBar(for field: UITextField) -> UIToolbar {
+        let bar = UIToolbar()
+        bar.sizeToFit()
+        // Without an explicit background the bar renders transparent and the button
+        // floats over the page as a tinted pill. configureWithDefaultBackground gives
+        // it the same chrome the SwiftUI keyboard toolbar draws for the plain fields.
+        let appearance = UIToolbarAppearance()
+        appearance.configureWithDefaultBackground()
+        bar.standardAppearance = appearance
+        bar.compactAppearance = appearance
+        // Tint drives the item colour; title attributes alone lose to the system tint.
+        bar.tintColor = UIColor(Color.incText)
+        let done = UIBarButtonItem(
+            title: "Done",
+            style: .plain,
+            target: field,
+            action: #selector(UIResponder.resignFirstResponder)
+        )
+        done.setTitleTextAttributes(
+            [.font: UIFont.systemFont(ofSize: 16, weight: .semibold),
+             .foregroundColor: UIColor(Color.incText)],
+            for: .normal
+        )
+        bar.items = [
+            UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+            done,
+        ]
+        return bar
     }
 
     final class Coordinator: NSObject, UITextFieldDelegate {

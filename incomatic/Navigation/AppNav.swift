@@ -102,6 +102,11 @@ struct AppPillNav: View {
 /// visible while the header is pinned above the scroll content, instead of
 /// living only in a floating bottom CTA.
 struct AppSectionHeader: View {
+    private static let horizontalPadding: CGFloat = 26
+
+    /// Breathing room between the projected figure and the account glyph.
+    private static let glyphGap: CGFloat = 10
+
     let title: String
     var section: Binding<CalculatorSection>? = nil
     var payFrequency: PayFrequency? = nil
@@ -122,7 +127,15 @@ struct AppSectionHeader: View {
                         Text(projectedPerPeriod.map(formatCurrency) ?? "—")
                             .font(.system(size: 20, weight: .medium, design: .serif))
                             .foregroundColor(.incSageDeep)
+                            // A six-figure paycheck should shrink rather than
+                            // truncate the one number this header exists to show.
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                     }
+                    // The account glyph is an overlay on the shell, floating over this
+                    // same corner. Reserve its footprint or it covers the figure.
+                    .padding(.trailing, max(0, AccountGlyph.reservedTrailingWidth
+                                               + Self.glyphGap - Self.horizontalPadding))
                 }
             }
             if let section {
@@ -145,6 +158,6 @@ struct AppSectionHeader: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, 12).padding(.horizontal, 26).padding(.bottom, 20)
+        .padding(.top, 12).padding(.horizontal, Self.horizontalPadding).padding(.bottom, 20)
     }
 }

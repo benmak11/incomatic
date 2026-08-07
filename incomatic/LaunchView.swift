@@ -135,6 +135,8 @@ struct RootView: View {
         // Runs once per launch, behind the splash, so the newest published tax
         // year is cached before the first calculation is built.
         .task { await refreshTaxYear() }
+        // Emits session_start and flushes anything the last run could not send.
+        .task { Analytics.shared.start() }
     }
 }
 
