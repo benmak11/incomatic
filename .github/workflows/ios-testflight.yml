@@ -5,6 +5,9 @@ on:
   push:
     tags: [ "v*" ]          # e.g. push tag v1.0.0
 
+permissions:
+  contents: write   # the beta lane pushes a build/X.Y.Z+N tag after uploading
+
 jobs:
   testflight:
     name: Build and upload to TestFlight
@@ -15,6 +18,14 @@ jobs:
 
       - name: Show Xcode version
         run: xcodebuild -version
+
+      - name: Configure git identity
+        # The beta lane pushes an annotated build/X.Y.Z+N tag, and annotated
+        # tags need an author. Runners have no git identity by default, so
+        # without this the tag silently fails to be created.
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Materialize Secrets.xcconfig
         # The committed Secrets.xcconfig is gitignored, so it is absent on CI. Without
