@@ -32,10 +32,22 @@ struct BudgetBucketDonut: View {
             )
             .frame(width: 168, height: 168)
 
-            HStack(spacing: 18) {
-                legendDot("Needs", needs, .incSageDeep)
-                legendDot("Wants", wants, .incBlush)
-                legendDot("Savings", savings, .incGold)
+            // One row while the amounts are short, two once they are not. Without this the
+            // row overflows and only the last label wraps, so "Savings · $962" breaks
+            // across two lines while its neighbours sit on one.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 18) {
+                    legendDot("Needs", needs, .incSageDeep)
+                    legendDot("Wants", wants, .incBlush)
+                    legendDot("Savings", savings, .incGold)
+                }
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 18) {
+                        legendDot("Needs", needs, .incSageDeep)
+                        legendDot("Wants", wants, .incBlush)
+                    }
+                    legendDot("Savings", savings, .incGold)
+                }
             }
         }
     }
@@ -46,6 +58,9 @@ struct BudgetBucketDonut: View {
             Text("\(label) · \(formatWholeCurrency(value))")
                 .font(.system(size: 11.5, weight: .semibold))
                 .foregroundColor(.incTextDim)
+                // Keep each label whole so ViewThatFits chooses a layout instead of the
+                // text quietly wrapping mid-item.
+                .fixedSize(horizontal: true, vertical: false)
         }
     }
 }
