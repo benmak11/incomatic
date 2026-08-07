@@ -23,7 +23,7 @@ struct PaycheckTimelineView: View {
                 .font(.system(size: 13))
                 .foregroundColor(.incTextDim)
                 .padding(.horizontal, 16)
-                .padding(.bottom, 14)
+                .padding(.bottom, 4)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: 12) {
@@ -32,9 +32,18 @@ struct PaycheckTimelineView: View {
                     }
                 }
                 .padding(.horizontal, 16)
+                // The TODAY badge is offset above its card's top edge, and a ScrollView
+                // clips to its own bounds — without this the badge is sliced in half.
+                // Paired with the 4pt above so the gap under the caption still reads as 14.
+                .padding(.top, 10)
             }
         }
         .padding(.bottom, 100)
+        // Every sibling tab is a ScrollView, which greedily fills the height and so pins
+        // the Budget header to the top. This tab scrolls horizontally only, so without an
+        // explicit fill it sizes to its content and the shell's VStack centres the whole
+        // screen, header included.
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }
 
