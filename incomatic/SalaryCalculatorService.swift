@@ -282,7 +282,7 @@ class SalaryCalculatorService {
         }
         let (data, response): (Data, URLResponse)
         do {
-            (data, response) = try await URLSession.shared.data(from: url)
+            (data, response) = try await APISession.data(from: url)
         } catch {
             throw APIError.networkError(error)
         }
@@ -306,7 +306,7 @@ class SalaryCalculatorService {
         }
         let (data, response): (Data, URLResponse)
         do {
-            (data, response) = try await URLSession.shared.data(from: url)
+            (data, response) = try await APISession.data(from: url)
         } catch {
             throw APIError.networkError(error)
         }
@@ -349,7 +349,7 @@ class SalaryCalculatorService {
 
         let (data, response): (Data, URLResponse)
         do {
-            (data, response) = try await URLSession.shared.data(for: urlRequest)
+            (data, response) = try await APISession.data(for: urlRequest)
         } catch {
             throw APIError.networkError(error)
         }

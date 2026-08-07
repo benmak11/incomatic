@@ -70,7 +70,7 @@ nonisolated final class AuthService {
 
         let (data, response): (Data, URLResponse)
         do {
-            (data, response) = try await URLSession.shared.data(for: request)
+            (data, response) = try await APISession.data(for: request)
         } catch {
             throw AuthError.network(error)
         }
@@ -93,7 +93,7 @@ nonisolated final class AuthService {
 
         let (data, response): (Data, URLResponse)
         do {
-            (data, response) = try await URLSession.shared.data(for: request)
+            (data, response) = try await APISession.data(for: request)
         } catch {
             throw AuthError.network(error)
         }

@@ -18,13 +18,13 @@ final class TaxYearTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        URLProtocol.registerClass(StubURLProtocol.self)
+        StubURLProtocol.install()
         saved = UserDefaults.standard.object(forKey: key) as? Int
         UserDefaults.standard.removeObject(forKey: key)
     }
 
     override func tearDown() {
-        URLProtocol.unregisterClass(StubURLProtocol.self)
+        StubURLProtocol.uninstall()
         StubURLProtocol.stub = nil
         if let saved {
             UserDefaults.standard.set(saved, forKey: key)

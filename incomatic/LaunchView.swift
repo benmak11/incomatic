@@ -111,6 +111,7 @@ struct LaunchView: View {
 
 struct RootView: View {
     @State private var showLaunch = true
+    @StateObject private var upgradeGate = UpgradeGate.shared
 
     var body: some View {
         ZStack {
@@ -121,7 +122,16 @@ struct RootView: View {
                     .transition(.opacity)
                     .zIndex(1)
             }
+
+            // Above the splash: once the backend has refused this build there
+            // is nothing behind here that can work.
+            if let requirement = upgradeGate.requirement {
+                UpgradeRequiredView(requirement: requirement)
+                    .transition(.opacity)
+                    .zIndex(2)
+            }
         }
+        .animation(.easeInOut(duration: 0.25), value: upgradeGate.requirement)
         // Runs once per launch, behind the splash, so the newest published tax
         // year is cached before the first calculation is built.
         .task { await refreshTaxYear() }

@@ -18,12 +18,12 @@ final class CalculationHistoryServiceTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        URLProtocol.registerClass(StubURLProtocol.self)
+        StubURLProtocol.install()
         service = CalculationHistoryService()
     }
 
     override func tearDown() {
-        URLProtocol.unregisterClass(StubURLProtocol.self)
+        StubURLProtocol.uninstall()
         StubURLProtocol.stub = nil
         service = nil
         super.tearDown()
