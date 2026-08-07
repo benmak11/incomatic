@@ -32,11 +32,14 @@ jobs:
           -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
           -quiet
 
-    - name: Run tests (if available)
+    # A failing test must fail the job. This previously ended in
+    # `|| echo "No tests found"` with `continue-on-error: true`, which swallowed
+    # the exit code twice — 23 broken tests reported green before that was found.
+    # The target has tests; if it ever stops having them, that is also worth failing on.
+    - name: Run tests
       run: |
         xcodebuild test \
           -scheme incomatic \
           -configuration Debug \
           -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
-          -quiet || echo "No tests found, skipping test execution"
-      continue-on-error: true
+          -quiet
