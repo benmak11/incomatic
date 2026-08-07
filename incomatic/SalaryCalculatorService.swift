@@ -290,6 +290,10 @@ class SalaryCalculatorService {
             throw APIError.invalidResponse
         }
         guard (200...299).contains(http.statusCode) else {
+            // Pro-only refusal is a product state, not a server error — see
+            // SubscriptionRequired. Checked before the generic branch so it is not
+            // flattened into a message string.
+            if http.statusCode == 402 { throw SubscriptionRequired.from(data) }
             let message = String(data: data, encoding: .utf8) ?? "Server returned \(http.statusCode)"
             throw APIError.serverError(message)
         }
@@ -314,6 +318,10 @@ class SalaryCalculatorService {
             throw APIError.invalidResponse
         }
         guard (200...299).contains(http.statusCode) else {
+            // Pro-only refusal is a product state, not a server error — see
+            // SubscriptionRequired. Checked before the generic branch so it is not
+            // flattened into a message string.
+            if http.statusCode == 402 { throw SubscriptionRequired.from(data) }
             let message = String(data: data, encoding: .utf8) ?? "Server returned \(http.statusCode)"
             throw APIError.serverError(message)
         }

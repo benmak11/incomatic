@@ -78,6 +78,10 @@ nonisolated final class CalculationHistoryService {
         switch http.statusCode {
         case 200...299:
             break
+        case 402:
+            // Pro-only route. A distinct type, not another server(402,…): the paywall
+            // needs to open on the refused feature rather than surface an error toast.
+            throw SubscriptionRequired.from(data)
         case 401:
             // /v1/calculations is 401-when-anonymous per the backend contract — same
             // mapping EquityService and BudgetService use for their authed endpoints.

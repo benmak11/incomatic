@@ -112,3 +112,21 @@ final class AnalyticsTests: XCTestCase {
         XCTAssertEqual(Analytics.bucket(1000, width: 0), "unknown")
     }
 }
+
+/// The client half of the backend's 402. Ships dark, so these guard the mapping
+/// rather than any user-visible behaviour today.
+final class SubscriptionRequiredTests: XCTestCase {
+
+    func test_readsTheRefusedFeatureFromTheBody() {
+        let body = #"{"error":"subscription_required","feature":"budget_plan"}"#.data(using: .utf8)!
+        XCTAssertEqual(SubscriptionRequired.from(body).feature, "budget_plan")
+    }
+
+    func test_anUnreadableBodyStillRefuses() {
+        // Failing to parse must not turn a refusal into a success; we just lose
+        // the ability to open the paywall on the right surface.
+        XCTAssertEqual(SubscriptionRequired.from(Data("not json".utf8)).feature, "")
+        XCTAssertEqual(SubscriptionRequired.from(Data()).feature, "")
+        XCTAssertEqual(SubscriptionRequired.from(Data("{}".utf8)).feature, "")
+    }
+}

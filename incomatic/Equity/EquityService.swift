@@ -131,6 +131,10 @@ nonisolated final class EquityService {
         switch http.statusCode {
         case 200...299:
             break
+        case 402:
+            // Pro-only route. A distinct type, not another server(402,…): the paywall
+            // needs to open on the refused feature rather than surface an error toast.
+            throw SubscriptionRequired.from(data)
         case 401:
             throw EquityError.notAuthenticated
         case 503:

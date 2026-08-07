@@ -15,6 +15,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(\.requestReview) private var requestReview
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var locationManager = LocationManager()
     @StateObject private var viewModel = SalaryCalculatorViewModel()
     @StateObject private var accountManager = AccountManager()
@@ -73,6 +74,8 @@ struct ContentView: View {
                 }
                 Analytics.shared.track(AnalyticsEventName.calculationCompleted,
                                       properties: calculationProperties())
+                // A completed calculation is the state most worth not losing.
+                CalculatorStatePersistence.save(calculatorState)
                 if ReviewPromptManager.recordSuccessfulCalculation() {
                     requestReview()
                 }
@@ -87,6 +90,14 @@ struct ContentView: View {
             // funnel visible.
             Analytics.shared.sessionTokenProvider = { [weak accountManager] in
                 accountManager?.sessionToken
+            }
+            // Before the first render, so a returning user never sees an empty form.
+            CalculatorStatePersistence.restore(into: calculatorState)
+        }
+        .onChange(of: scenePhase) { _, phase in
+            // Covers backgrounding, the app switcher, and termination from either.
+            if phase != .active {
+                CalculatorStatePersistence.save(calculatorState)
             }
         }
         .onChange(of: accountManager.isSignedIn) { _, signedIn in
@@ -190,6 +201,7 @@ struct ContentView: View {
 
     private func finishOnboarding() {
         Analytics.shared.track(AnalyticsEventName.onboardingCompleted)
+        CalculatorStatePersistence.save(calculatorState)
         hasCompletedOnboarding = true
         selectedTab = .insights
         viewModel.isLoading = true

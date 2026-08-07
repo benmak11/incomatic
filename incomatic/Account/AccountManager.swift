@@ -122,6 +122,9 @@ final class AccountManager: ObservableObject {
         do {
             try await authService.deleteAccount(token: token)
             signOut()   // wipes keychain + local session state
+            // The saved inputs are the user's financial details and live outside the
+            // keychain, so signOut alone leaves them on disk after a deletion request.
+            CalculatorStatePersistence.clear()
             return true
         } catch {
             errorMessage = error.localizedDescription
