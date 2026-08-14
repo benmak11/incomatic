@@ -51,6 +51,24 @@ final class SalaryCalculatorServiceTests: XCTestCase {
         }
     }
 
+    func test_calculateSalary_429_throwsRateLimited() async {
+        StubURLProtocol.stub = .init(
+            statusCode: 429,
+            body: "{\"error\":\"Too many requests. Retry in a minute.\"}".data(using: .utf8)
+        )
+
+        do {
+            _ = try await service.calculateSalary(
+                request: minimalRequest(), baseSalaryAnnual: 0, bonusAnnual: 0, benefits: BenefitsInput()
+            )
+            XCTFail("expected rateLimited")
+        } catch SalaryCalculatorService.APIError.rateLimited {
+            // /v1/calculate is throttled even anonymously, so this is the reachable one.
+        } catch {
+            XCTFail("expected APIError.rateLimited, got \(error)")
+        }
+    }
+
     func test_calculateSalary_serverErrorStatus_throwsServerErrorWithBody() async {
         StubURLProtocol.stub = .init(statusCode: 500, body: "boom".data(using: .utf8))
 

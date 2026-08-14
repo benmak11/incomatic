@@ -56,6 +56,23 @@ final class CalculationHistoryServiceTests: XCTestCase {
         }
     }
 
+    func test_list_429_throwsRateLimited() async {
+        service.sessionTokenProvider = { "token" }
+        StubURLProtocol.stub = .init(
+            statusCode: 429,
+            body: "{\"error\":\"Too many requests. Retry in a minute.\"}".data(using: .utf8)
+        )
+
+        do {
+            _ = try await service.list()
+            XCTFail("expected rateLimited")
+        } catch CalculationHistoryService.HistoryError.rateLimited {
+            // The raw JSON body must not reach the user as an error string.
+        } catch {
+            XCTFail("expected HistoryError.rateLimited, got \(error)")
+        }
+    }
+
     func test_list_malformedJSON_throwsDecodingError() async {
         service.sessionTokenProvider = { "token" }
         StubURLProtocol.stub = .init(statusCode: 200, body: "not json".data(using: .utf8))

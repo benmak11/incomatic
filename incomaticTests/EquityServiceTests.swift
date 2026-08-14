@@ -105,6 +105,23 @@ final class EquityServiceTests: XCTestCase {
         }
     }
 
+    func test_searchStocks_429_throwsRateLimited() async {
+        service.sessionTokenProvider = { "token" }
+        StubURLProtocol.stub = .init(
+            statusCode: 429,
+            body: "{\"error\":\"Too many requests. Retry in a minute.\"}".data(using: .utf8)
+        )
+
+        do {
+            _ = try await service.searchStocks(query: "AAPL")
+            XCTFail("expected rateLimited")
+        } catch EquityService.EquityError.rateLimited {
+            // The raw JSON body must not reach the user as an error string.
+        } catch {
+            XCTFail("expected EquityError.rateLimited, got \(error)")
+        }
+    }
+
     func test_deleteGrant_transportFailure_throwsNetworkError() async {
         service.sessionTokenProvider = { "token" }
         StubURLProtocol.stub = .init(statusCode: 0, transportError: URLError(.networkConnectionLost))

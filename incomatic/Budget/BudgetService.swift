@@ -27,6 +27,9 @@ nonisolated final class BudgetService {
         case notFound
         /// Backend 503 — Vertex AI unconfigured or the Gemini call failed.
         case planUnavailable
+        /// Backend 429. Distinct from server(429,…) so the user reads "wait a minute"
+        /// rather than the raw JSON error body.
+        case rateLimited
         case network(Error)
         case server(Int, String)
         case decoding(Error)
@@ -37,6 +40,7 @@ nonisolated final class BudgetService {
             case .notAuthenticated:     return "Sign in to sync your budget"
             case .notFound:             return "No budget saved yet"
             case .planUnavailable:      return "AI budget plan unavailable right now"
+            case .rateLimited:          return "Too many requests. Try again in a minute"
             case .network(let e):       return e.localizedDescription
             case .server(let c, let m): return "HTTP \(c): \(m)"
             case .decoding(let e):      return "Failed to decode budget response: \(e.localizedDescription)"
@@ -139,6 +143,8 @@ nonisolated final class BudgetService {
             throw BudgetServiceError.notAuthenticated
         case 404:
             throw BudgetServiceError.notFound
+        case 429:
+            throw BudgetServiceError.rateLimited
         case 503:
             throw BudgetServiceError.planUnavailable
         default:

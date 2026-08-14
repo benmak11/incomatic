@@ -38,6 +38,9 @@ nonisolated final class AuthService {
         /// identity token (signInWithApple). Same mapping EquityService,
         /// BudgetService and CalculationHistoryService use for their authed calls.
         case notAuthenticated
+        /// 429 — the backend rate limiter. Distinct from server(429,…) so a throttled
+        /// caller reads "wait a minute" rather than "Sign-in failed (HTTP 429)".
+        case rateLimited
         case server(Int, String)
         case decoding(Error)
 
@@ -47,6 +50,7 @@ nonisolated final class AuthService {
             case .network(let e):        return "Network error: \(e.localizedDescription)"
             case .invalidResponse:       return "Invalid response from server"
             case .notAuthenticated:      return "Sign-in session invalid or expired"
+            case .rateLimited:           return "Too many attempts. Try again in a minute"
             case .server(let code, let m):
                 return "Sign-in failed (HTTP \(code)): \(m)"
             case .decoding(let e):       return "Failed to decode response: \(e.localizedDescription)"
@@ -106,6 +110,7 @@ nonisolated final class AuthService {
         guard let http = response as? HTTPURLResponse else { throw AuthError.invalidResponse }
         if (200...299).contains(http.statusCode) { return }
         if http.statusCode == 401 { throw AuthError.notAuthenticated }
+        if http.statusCode == 429 { throw AuthError.rateLimited }
         let message = String(data: data, encoding: .utf8) ?? "Server returned \(http.statusCode)"
         throw AuthError.server(http.statusCode, message)
     }

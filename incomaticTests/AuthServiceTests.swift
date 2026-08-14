@@ -55,6 +55,23 @@ final class AuthServiceTests: XCTestCase {
         }
     }
 
+    func test_signInWithApple_429_throwsRateLimited() async {
+        StubURLProtocol.stub = .init(
+            statusCode: 429,
+            body: "{\"error\":\"Too many requests. Retry in a minute.\"}".data(using: .utf8)
+        )
+
+        do {
+            _ = try await service.signInWithApple(identityToken: "tok", nonce: "nonce", displayName: nil)
+            XCTFail("expected rateLimited")
+        } catch AuthService.AuthError.rateLimited {
+            // Not server(429, body) — "Sign-in failed (HTTP 429): {json}" is not a
+            // message anyone can act on.
+        } catch {
+            XCTFail("expected AuthError.rateLimited, got \(error)")
+        }
+    }
+
     func test_signInWithApple_serverErrorStatus_throwsServerErrorWithBody() async {
         StubURLProtocol.stub = .init(statusCode: 500, body: "boom".data(using: .utf8))
 
