@@ -249,6 +249,9 @@ class SalaryCalculatorService {
         case networkError(Error)
         case invalidResponse
         case decodingError(Error)
+        /// Backend 429. Its own case rather than a serverError(…) carrying the raw body,
+        /// which is what the user would otherwise be shown verbatim.
+        case rateLimited
         case serverError(String)
 
         var errorDescription: String? {
@@ -257,6 +260,7 @@ class SalaryCalculatorService {
             case .networkError(let e):  return "Network error: \(e.localizedDescription)"
             case .invalidResponse:      return "Invalid response from server"
             case .decodingError(let e): return "Failed to decode response: \(e.localizedDescription)"
+            case .rateLimited:          return "Too many requests. Try again in a minute"
             case .serverError(let m):   return m
             }
         }
@@ -294,6 +298,7 @@ class SalaryCalculatorService {
             // SubscriptionRequired. Checked before the generic branch so it is not
             // flattened into a message string.
             if http.statusCode == 402 { throw SubscriptionRequired.from(data) }
+            if http.statusCode == 429 { throw APIError.rateLimited }
             let message = String(data: data, encoding: .utf8) ?? "Server returned \(http.statusCode)"
             throw APIError.serverError(message)
         }
@@ -322,6 +327,7 @@ class SalaryCalculatorService {
             // SubscriptionRequired. Checked before the generic branch so it is not
             // flattened into a message string.
             if http.statusCode == 402 { throw SubscriptionRequired.from(data) }
+            if http.statusCode == 429 { throw APIError.rateLimited }
             let message = String(data: data, encoding: .utf8) ?? "Server returned \(http.statusCode)"
             throw APIError.serverError(message)
         }
@@ -366,6 +372,9 @@ class SalaryCalculatorService {
             throw APIError.invalidResponse
         }
         guard (200...299).contains(httpResponse.statusCode) else {
+            // The likeliest throttle in the app: /v1/calculate is rate-limited even when
+            // anonymous, so a fast-tapping user can reach this without being signed in.
+            if httpResponse.statusCode == 429 { throw APIError.rateLimited }
             let message = String(data: data, encoding: .utf8) ?? "Server returned \(httpResponse.statusCode)"
             throw APIError.serverError(message)
         }

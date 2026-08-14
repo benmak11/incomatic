@@ -18,6 +18,9 @@ nonisolated final class CalculationHistoryService {
     enum HistoryError: LocalizedError {
         case invalidURL
         case notAuthenticated
+        /// Backend 429. Distinct from server(429,…) so the user reads "wait a minute"
+        /// rather than the raw JSON error body.
+        case rateLimited
         case network(Error)
         case server(Int, String)
         case decoding(Error)
@@ -26,6 +29,7 @@ nonisolated final class CalculationHistoryService {
             switch self {
             case .invalidURL:        return "Invalid history URL"
             case .notAuthenticated:  return "Sign in to access calculation history"
+            case .rateLimited:       return "Too many requests. Try again in a minute"
             case .network(let e):    return e.localizedDescription
             case .server(let c, let m): return "HTTP \(c): \(m)"
             case .decoding(let e):   return "Failed to decode history: \(e.localizedDescription)"
@@ -86,6 +90,8 @@ nonisolated final class CalculationHistoryService {
             // /v1/calculations is 401-when-anonymous per the backend contract — same
             // mapping EquityService and BudgetService use for their authed endpoints.
             throw HistoryError.notAuthenticated
+        case 429:
+            throw HistoryError.rateLimited
         default:
             let message = String(data: data, encoding: .utf8) ?? "Unexpected status"
             throw HistoryError.server(http.statusCode, message)

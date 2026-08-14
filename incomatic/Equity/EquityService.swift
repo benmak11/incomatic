@@ -23,6 +23,9 @@ nonisolated final class EquityService {
         case lookupUnavailable
         /// Quote for a symbol the provider doesn't know.
         case unknownSymbol
+        /// Backend 429. Distinct from server(429,…) so the user reads "wait a minute"
+        /// rather than the raw JSON error body.
+        case rateLimited
         case network(Error)
         case server(Int, String)
         case decoding(Error)
@@ -33,6 +36,7 @@ nonisolated final class EquityService {
             case .notAuthenticated:   return "Sign in to sync RSU grants"
             case .lookupUnavailable:  return "Stock lookup unavailable. Enter price manually"
             case .unknownSymbol:      return "Unknown ticker symbol"
+            case .rateLimited:        return "Too many requests. Try again in a minute"
             case .network(let e):     return e.localizedDescription
             case .server(let c, let m): return "HTTP \(c): \(m)"
             case .decoding(let e):    return "Failed to decode equity response: \(e.localizedDescription)"
@@ -137,6 +141,8 @@ nonisolated final class EquityService {
             throw SubscriptionRequired.from(data)
         case 401:
             throw EquityError.notAuthenticated
+        case 429:
+            throw EquityError.rateLimited
         case 503:
             throw EquityError.lookupUnavailable
         default:
