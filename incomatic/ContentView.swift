@@ -22,6 +22,7 @@ struct ContentView: View {
     @StateObject private var historyViewModel = HistoryViewModel()
     @StateObject private var equityStore = EquityStore()
     @StateObject private var budgetStore = BudgetStore()
+    @StateObject private var paydayStore = PaydayStore()
     /// Shared with onboarding so answers collected there are already in
     /// place once the Calculator tab is reachable.
     @State private var calculatorState = CalculatorState()
@@ -29,6 +30,8 @@ struct ContentView: View {
     @State private var showingAccountSheet = false
     @State private var toastMessage: String?
     @State private var pillNavCompact = false
+    @State private var showingAnchorReveal = false
+    @State private var showingPriming = false
     @AppStorage("incomatic.hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     var body: some View {
@@ -64,8 +67,19 @@ struct ContentView: View {
             }
         }
         .onChange(of: viewModel.isLoading) { _, loading in
-            if !loading && viewModel.calculationResult != nil {
+            if !loading, let result = viewModel.calculationResult {
                 selectedTab = .insights
+                // The widget and the notification body both read this, so it has
+                // to be recorded on every calculation rather than only the first.
+                paydayStore.recordNet(result.netPay.perPayPeriod,
+                                      frequency: calculatorState.payFrequency)
+                // Candidate A: ask for the payday while the figure they came for
+                // is still on screen. Once per install, and never after
+                // onboarding already asked.
+                if paydayStore.shouldAskOnReveal {
+                    showingAnchorReveal = true
+                    PaydayAnalytics.promptShown(.reveal)
+                }
                 if accountManager.isSignedIn {
                     Task {
                         await historyViewModel.load()
@@ -80,6 +94,33 @@ struct ContentView: View {
                     requestReview()
                 }
             }
+        }
+        .fullScreenCover(isPresented: $showingAnchorReveal) {
+            PaydayAnchorRevealView(
+                net: viewModel.calculationResult?.netPay.perPayPeriod ?? 0,
+                frequency: calculatorState.payFrequency
+            ) { anchor in
+                if let anchor {
+                    let isFirst = paydayStore.anchor == nil
+                    paydayStore.revealAsked = true
+                    paydayStore.save(anchor)
+                    PaydayAnalytics.anchorSet(anchor, source: .reveal, first: isFirst)
+                    // The anchor is the precondition for the notification being
+                    // worth anything, so priming follows immediately while the
+                    // reason is still obvious.
+                    if !paydayStore.primingAnswered { showingPriming = true }
+                } else {
+                    paydayStore.declineReveal()
+                    PaydayAnalytics.promptDismissed(.reveal)
+                }
+                showingAnchorReveal = false
+            }
+        }
+        .sheet(isPresented: $showingPriming) {
+            NotifPrimingSheet(net: paydayStore.netPerPeriod) { _ in
+                paydayStore.primingAnswered = true
+            }
+            .presentationDetents([.height(430)])
         }
         .onChange(of: selectedTab) { _, _ in
             pillNavCompact = false
@@ -127,7 +168,9 @@ struct ContentView: View {
                         equityStore: equityStore,
                         state: calculatorState,
                         onShowAccount: { showingAccountSheet = true },
-                        tab: $selectedTab
+                        tab: $selectedTab,
+                        paydayStore: paydayStore,
+                        hasCalculated: viewModel.calculationResult != nil
                     )
                 case .insights:
                     InsightsTab(
@@ -140,7 +183,8 @@ struct ContentView: View {
                         outlookGrants: equityStore.grants,
                         onScrollDirectionChange: { down in pillNavCompact = down },
                         budgetStore: budgetStore,
-                        calculatorState: calculatorState
+                        calculatorState: calculatorState,
+                        paydayStore: paydayStore
                     )
                 case .history:
                     HistoryTab(
@@ -199,7 +243,18 @@ struct ContentView: View {
         return properties
     }
 
-    private func finishOnboarding() {
+    private func finishOnboarding(anchor: PayAnchor?) {
+        // Saved before the calculation so the countdown is already live when
+        // Insights appears with the first result.
+        if let anchor, anchor.isComplete {
+            let isFirst = paydayStore.anchor == nil
+            paydayStore.save(anchor)
+            PaydayAnalytics.anchorSet(anchor, source: .onboarding, first: isFirst)
+        }
+        // Onboarding just asked (candidate C), so the results reveal must not
+        // ask again on the calculation it is about to kick off. A exists to
+        // reach the install base that never sees onboarding.
+        paydayStore.revealAsked = true
         Analytics.shared.track(AnalyticsEventName.onboardingCompleted)
         CalculatorStatePersistence.save(calculatorState)
         hasCompletedOnboarding = true

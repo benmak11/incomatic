@@ -25,10 +25,15 @@ struct InsightsTab: View {
     var onScrollDirectionChange: (Bool) -> Void = { _ in }
     @ObservedObject var budgetStore: BudgetStore
     let calculatorState: CalculatorState
+    @ObservedObject var paydayStore: PaydayStore
 
     @State private var atBottom = false
     @State private var bannerDismissed = false
     @State private var showingBudgetFlow = false
+    @State private var showingAnchorEditor = false
+    /// Priming is offered once, immediately after the anchor is saved, which is
+    /// the only moment the notification's value is self-evident.
+    @State private var showingPriming = false
 
     // Banner is shown whenever we're at the bottom AND it hasn't been dismissed during
     // this visit. Leaving the bottom re-arms it, so it pops again next time you return.
@@ -64,7 +69,8 @@ struct InsightsTab: View {
                         onScrollDirectionChange: onScrollDirectionChange,
                         showBudgetCTA: isSignedIn,
                         hasExistingBudget: !budgetStore.budget.goals.isEmpty || !budgetStore.budget.expenses.isEmpty,
-                        onStartBudget: { showingBudgetFlow = true }
+                        onStartBudget: { showingBudgetFlow = true },
+                        paydayHeader: AnyView(paydayCountdown)
                     )
                 } else {
                     emptyState
@@ -80,6 +86,28 @@ struct InsightsTab: View {
         .onChange(of: isLoading) { _, loading in
             if loading { atBottom = false; bannerDismissed = false }
         }
+        .sheet(isPresented: $showingAnchorEditor) {
+            AnchorEditSheet(
+                frequency: calculatorState.payFrequency,
+                net: paydayStore.netPerPeriod,
+                initial: paydayStore.anchor
+            ) { anchor in
+                let isFirst = paydayStore.anchor == nil
+                paydayStore.save(anchor)
+                PaydayAnalytics.anchorSet(anchor, source: .insightsEdit, first: isFirst)
+                // Only ask about notifications the first time, and only once:
+                // iOS gives one shot at the system prompt.
+                if isFirst && !paydayStore.primingAnswered {
+                    showingPriming = true
+                }
+            }
+        }
+        .sheet(isPresented: $showingPriming) {
+            NotifPrimingSheet(net: paydayStore.netPerPeriod) { _ in
+                paydayStore.primingAnswered = true
+            }
+            .presentationDetents([.height(430)])
+        }
         .fullScreenCover(isPresented: $showingBudgetFlow) {
             if let result {
                 BudgetFlowView(
@@ -91,6 +119,21 @@ struct InsightsTab: View {
                 )
             }
         }
+    }
+
+    /// Top of Insights rather than a fourth tab: one component that grows from a
+    /// single line to a hero as payday approaches, so it costs nothing on the
+    /// ~339 days a year when it is not interesting.
+    private var paydayCountdown: some View {
+        PaydayCountdown(
+            anchor: paydayStore.anchor,
+            net: paydayStore.netPerPeriod,
+            frequency: calculatorState.payFrequency,
+            onEdit: { showingAnchorEditor = true },
+            onAdd: { showingAnchorEditor = true },
+            onOpen: { showingAnchorEditor = true },
+            onBreakdown: {}
+        )
     }
 
     /// Shown when a calculation fails (errorMessage set, no result). Without this

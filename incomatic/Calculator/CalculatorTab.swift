@@ -24,7 +24,13 @@ struct CalculatorTab: View {
     /// CalculatorBottomDock can switch tabs, same as the shell's own floating
     /// AppPillNav does for Insights/History.
     @Binding var tab: MainTab
+    @ObservedObject var paydayStore: PaydayStore
+    /// True once this install has produced a result, which gates the banner's
+    /// second pass: showing the widget preview to someone who has never seen a
+    /// figure is selling a countdown to a number they do not have yet.
+    var hasCalculated: Bool = false
     @State private var showGrantsSheet = false
+    @State private var showingAnchorEditor = false
     @State private var keyboardVisible = false
 
     var body: some View {
@@ -37,6 +43,23 @@ struct CalculatorTab: View {
                 payFrequency: state.payFrequency,
                 projectedPerPeriod: preview.perPeriod
             )
+
+            if let pass = paydayStore.bannerPass(hasCalculated: hasCalculated) {
+                ExistingUserBanner(
+                    pass: pass,
+                    onAdd: { showingAnchorEditor = true },
+                    onDismiss: {
+                        paydayStore.dismissBanner(pass: pass)
+                        PaydayAnalytics.promptDismissed(.banner, pass: pass)
+                    }
+                )
+                .padding(.horizontal, 18)
+                .padding(.bottom, 14)
+                .transition(.opacity)
+                // Fires on the pass actually rendered, so pass 1 and pass 2
+                // carry separate conversion rates rather than one blended one.
+                .onAppear { PaydayAnalytics.promptShown(.banner, pass: pass) }
+            }
 
             ScrollView {
                 VStack(spacing: 0) {
@@ -86,6 +109,19 @@ struct CalculatorTab: View {
             }
         }
         .background(Color.incBg.ignoresSafeArea())
+        .sheet(isPresented: $showingAnchorEditor) {
+            AnchorEditSheet(
+                frequency: state.payFrequency,
+                net: paydayStore.netPerPeriod,
+                initial: paydayStore.anchor
+            ) { anchor in
+                let isFirst = paydayStore.anchor == nil
+                paydayStore.save(anchor)
+                PaydayAnalytics.anchorSet(anchor, source: .banner, first: isFirst)
+                // Saving from here retires the banner: the ask has been answered.
+                paydayStore.bannerRetired = true
+            }
+        }
         .sheet(isPresented: $showGrantsSheet) {
             GrantsSheet(store: equityStore, onChanged: syncGrantDerivedRsu)
         }

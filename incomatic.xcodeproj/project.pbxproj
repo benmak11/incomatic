@@ -6,7 +6,26 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		35873772303003EA0013EB1F /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35873771303003EA0013EB1F /* WidgetKit.framework */; };
+		35873774303003EA0013EB1F /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35873773303003EA0013EB1F /* SwiftUI.framework */; };
+		35873785303003EB0013EB1F /* IncomaticWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3587376F303003EA0013EB1F /* IncomaticWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		35C0DA02303100010013EB1F /* PayAnchor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C0DA01303100010013EB1F /* PayAnchor.swift */; };
+		35C0DA04303100010013EB1F /* PaydayInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C0DA03303100010013EB1F /* PaydayInfo.swift */; };
+		35C0DA06303100010013EB1F /* PaydayShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C0DA05303100010013EB1F /* PaydayShared.swift */; };
+		35C0DA08303100010013EB1F /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C0DA07303100010013EB1F /* DesignTokens.swift */; };
+		35C0DA0A303100010013EB1F /* CurrencyFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C0DA09303100010013EB1F /* CurrencyFormatting.swift */; };
+		35C0DA0C303100010013EB1F /* CalculatorEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C0DA0B303100010013EB1F /* CalculatorEnums.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
+		35873783303003EB0013EB1F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 359415A82EC10DDE00555F58 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3587376E303003EA0013EB1F;
+			remoteInfo = IncomaticWidgetExtension;
+		};
 		3596A1203012ED8A00769047 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 359415A82EC10DDE00555F58 /* Project object */;
@@ -16,14 +35,56 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		3587378A303003EB0013EB1F /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				35873785303003EB0013EB1F /* IncomaticWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		355BBBB82FD8B25F00D3A5E2 /* Incomatic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Incomatic.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3587376F303003EA0013EB1F /* IncomaticWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = IncomaticWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		35873771303003EA0013EB1F /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		35873773303003EA0013EB1F /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		3596A11C3012ED8A00769047 /* incomaticTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = incomaticTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		35C0DA01303100010013EB1F /* PayAnchor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PayAnchor.swift; path = incomatic/Payday/PayAnchor.swift; sourceTree = SOURCE_ROOT; };
+		35C0DA03303100010013EB1F /* PaydayInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PaydayInfo.swift; path = incomatic/Payday/PaydayInfo.swift; sourceTree = SOURCE_ROOT; };
+		35C0DA05303100010013EB1F /* PaydayShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PaydayShared.swift; path = incomatic/Payday/PaydayShared.swift; sourceTree = SOURCE_ROOT; };
+		35C0DA07303100010013EB1F /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DesignTokens.swift; path = incomatic/Design/DesignTokens.swift; sourceTree = SOURCE_ROOT; };
+		35C0DA09303100010013EB1F /* CurrencyFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CurrencyFormatting.swift; path = incomatic/Design/CurrencyFormatting.swift; sourceTree = SOURCE_ROOT; };
+		35C0DA0B303100010013EB1F /* CalculatorEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CalculatorEnums.swift; path = incomatic/Models/CalculatorEnums.swift; sourceTree = SOURCE_ROOT; };
 		35F0C0F202EC10DD00555A02 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
 		35F0C0F402EC10DD00555A04 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		35873786303003EB0013EB1F /* Exceptions for "IncomaticWidget" folder in "IncomaticWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				README.md,
+			);
+			target = 3587376E303003EA0013EB1F /* IncomaticWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		35873775303003EA0013EB1F /* IncomaticWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				35873786303003EB0013EB1F /* Exceptions for "IncomaticWidget" folder in "IncomaticWidgetExtension" target */,
+			);
+			path = IncomaticWidget;
+			sourceTree = "<group>";
+		};
 		359415B22EC10DDE00555F58 /* incomatic */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = incomatic;
@@ -37,6 +98,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		3587376C303003EA0013EB1F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				35873774303003EA0013EB1F /* SwiftUI.framework in Frameworks */,
+				35873772303003EA0013EB1F /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		359415AD2EC10DDE00555F58 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -54,6 +124,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		35873770303003EA0013EB1F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				35873771303003EA0013EB1F /* WidgetKit.framework */,
+				35873773303003EA0013EB1F /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		359415A72EC10DDE00555F58 = {
 			isa = PBXGroup;
 			children = (
@@ -62,7 +141,24 @@
 				355BBBB82FD8B25F00D3A5E2 /* Incomatic.app */,
 				3596A11C3012ED8A00769047 /* incomaticTests.xctest */,
 				3596A11D3012ED8A00769047 /* incomaticTests */,
+				3587376F303003EA0013EB1F /* IncomaticWidgetExtension.appex */,
+				35873775303003EA0013EB1F /* IncomaticWidget */,
+				35C0DA10303100010013EB1F /* Shared with Widget */,
+				35873770303003EA0013EB1F /* Frameworks */,
 			);
+			sourceTree = "<group>";
+		};
+		35C0DA10303100010013EB1F /* Shared with Widget */ = {
+			isa = PBXGroup;
+			children = (
+				35C0DA01303100010013EB1F /* PayAnchor.swift */,
+				35C0DA03303100010013EB1F /* PaydayInfo.swift */,
+				35C0DA05303100010013EB1F /* PaydayShared.swift */,
+				35C0DA07303100010013EB1F /* DesignTokens.swift */,
+				35C0DA09303100010013EB1F /* CurrencyFormatting.swift */,
+				35C0DA0B303100010013EB1F /* CalculatorEnums.swift */,
+			);
+			name = "Shared with Widget";
 			sourceTree = "<group>";
 		};
 		35F0C0F002EC10DD00555A00 /* Config */ = {
@@ -77,6 +173,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		3587376E303003EA0013EB1F /* IncomaticWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 35873787303003EB0013EB1F /* Build configuration list for PBXNativeTarget "IncomaticWidgetExtension" */;
+			buildPhases = (
+				3587376B303003EA0013EB1F /* Sources */,
+				3587376C303003EA0013EB1F /* Frameworks */,
+				3587376D303003EA0013EB1F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				35873775303003EA0013EB1F /* IncomaticWidget */,
+			);
+			name = IncomaticWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = IncomaticWidgetExtension;
+			productReference = 3587376F303003EA0013EB1F /* IncomaticWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		359415AF2EC10DDE00555F58 /* incomatic */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 359415BB2EC10DDF00555F58 /* Build configuration list for PBXNativeTarget "incomatic" */;
@@ -84,10 +202,12 @@
 				359415AC2EC10DDE00555F58 /* Sources */,
 				359415AD2EC10DDE00555F58 /* Frameworks */,
 				359415AE2EC10DDE00555F58 /* Resources */,
+				3587378A303003EB0013EB1F /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				35873784303003EB0013EB1F /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				359415B22EC10DDE00555F58 /* incomatic */,
@@ -132,6 +252,9 @@
 				LastSwiftUpdateCheck = 2650;
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
+					3587376E303003EA0013EB1F = {
+						CreatedOnToolsVersion = 26.5;
+					};
 					359415AF2EC10DDE00555F58 = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
@@ -157,11 +280,19 @@
 			targets = (
 				359415AF2EC10DDE00555F58 /* incomatic */,
 				3596A11B3012ED8A00769047 /* incomaticTests */,
+				3587376E303003EA0013EB1F /* IncomaticWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		3587376D303003EA0013EB1F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		359415AE2EC10DDE00555F58 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -179,6 +310,19 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		3587376B303003EA0013EB1F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				35C0DA02303100010013EB1F /* PayAnchor.swift in Sources */,
+				35C0DA04303100010013EB1F /* PaydayInfo.swift in Sources */,
+				35C0DA06303100010013EB1F /* PaydayShared.swift in Sources */,
+				35C0DA08303100010013EB1F /* DesignTokens.swift in Sources */,
+				35C0DA0A303100010013EB1F /* CurrencyFormatting.swift in Sources */,
+				35C0DA0C303100010013EB1F /* CalculatorEnums.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		359415AC2EC10DDE00555F58 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -196,6 +340,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		35873784303003EB0013EB1F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3587376E303003EA0013EB1F /* IncomaticWidgetExtension */;
+			targetProxy = 35873783303003EB0013EB1F /* PBXContainerItemProxy */;
+		};
 		3596A1213012ED8A00769047 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 359415AF2EC10DDE00555F58 /* incomatic */;
@@ -204,6 +353,72 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		35873788303003EB0013EB1F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = IncomaticWidget/IncomaticWidget.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X8E58H8HK5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = IncomaticWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = IncomaticWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.10.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.makusha.incomatic.IncomaticWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		35873789303003EB0013EB1F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = IncomaticWidget/IncomaticWidget.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X8E58H8HK5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = IncomaticWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = IncomaticWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.10.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.makusha.incomatic.IncomaticWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		359415B92EC10DDF00555F58 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 35F0C0F202EC10DD00555A02 /* Base.xcconfig */;
@@ -450,6 +665,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		35873787303003EB0013EB1F /* Build configuration list for PBXNativeTarget "IncomaticWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				35873788303003EB0013EB1F /* Debug */,
+				35873789303003EB0013EB1F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		359415AB2EC10DDE00555F58 /* Build configuration list for PBXProject "incomatic" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
