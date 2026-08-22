@@ -40,13 +40,22 @@ func livePreview(state: CalculatorState) -> LivePreview {
         ann(state.dependentCareFsaPerPeriod) + ann(state.hsaPerPeriod) +
         (annualGross * (state.traditional401kPercent / 100.0))
 
-    // 2025 standard deduction (single)
-    let taxable = max(0, annualGross - pretaxBenefits - 14_600)
+    // Figures below are 2026 single, copied from the backend's US-2026 rule
+    // pack so the preview and the real result agree on the shape.
+    //
+    // They are duplicated here on purpose: this runs on every keystroke and
+    // cannot call the server. That makes them the one place in the app that
+    // silently goes stale each January, and they had already drifted two years
+    // (the comment said 2025 while the numbers were 2024's). When a new pack
+    // year ships, update these from `federal.standardDeductions.SINGLE`,
+    // `federal.brackets` and `fica.ssWageBase` rather than by hand.
+    let taxable = max(0, annualGross - pretaxBenefits - 16_100)
 
-    // Progressive federal (2025 single, rough)
+    // Progressive federal (2026 single, rough). Caps are the upper bound of
+    // each band; the pack stores lower bounds under `over`.
     let brackets: [(cap: Double, rate: Double)] = [
-        (11_600, 0.10), (47_150, 0.12), (100_525, 0.22),
-        (191_950, 0.24), (243_725, 0.32), (609_350, 0.35),
+        (12_400, 0.10), (50_400, 0.12), (105_700, 0.22),
+        (201_775, 0.24), (256_225, 0.32), (640_600, 0.35),
         (.infinity, 0.37),
     ]
     var fed = 0.0, prev = 0.0, rem = taxable
@@ -64,7 +73,7 @@ func livePreview(state: CalculatorState) -> LivePreview {
         "WA": 0, "IL": 0.0495, "MA": 0.05,
     ]
     let stateTax = taxable * (stateRates[state.selectedStateCode] ?? 0.04)
-    let ss = min(annualGross, 168_600) * 0.062
+    let ss = min(annualGross, 184_500) * 0.062
     let medicare = annualGross * 0.0145
     let rothAmt = annualGross * (state.roth401kPercent / 100.0)
     let net = annualGross - fed - stateTax - ss - medicare - pretaxBenefits - rothAmt

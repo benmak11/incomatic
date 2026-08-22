@@ -70,23 +70,27 @@ enum APISession {
 
     static func data(for request: URLRequest) async throws -> (Data, URLResponse) {
         let result = try await session.data(for: request)
-        await noteUpgradeIfRefused(result)
+        noteUpgradeIfRefused(result)
         return result
     }
 
     static func data(from url: URL) async throws -> (Data, URLResponse) {
         let result = try await session.data(from: url)
-        await noteUpgradeIfRefused(result)
+        noteUpgradeIfRefused(result)
         return result
     }
 
     /// Callers keep throwing their own errors for a 426; the gate has already
     /// fired by then, so the upgrade screen covers the failure rather than the
     /// raw response body reaching a toast.
-    private static func noteUpgradeIfRefused(_ result: (Data, URLResponse)) async {
+    ///
+    /// Not `async`: `UpgradeGate` is `@MainActor` and so is this enum under the
+    /// target's default isolation, so recording the refusal is a same-actor call
+    /// with nothing to suspend on.
+    private static func noteUpgradeIfRefused(_ result: (Data, URLResponse)) {
         guard let http = result.1 as? HTTPURLResponse, http.statusCode == 426 else { return }
         let requirement = (try? JSONDecoder().decode(UpgradeRequirement.self, from: result.0))
             ?? UpgradeRequirement(message: nil, minimumVersion: nil)
-        await UpgradeGate.shared.record(requirement)
+        UpgradeGate.shared.record(requirement)
     }
 }

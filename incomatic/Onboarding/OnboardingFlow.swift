@@ -12,7 +12,7 @@
 import Observation
 
 enum OnboardingStep: CaseIterable {
-    case greet, wage, payFrequency, bonus, commission, filingStatus, state, benefits, retirement, review
+    case greet, wage, payFrequency, payday, bonus, commission, filingStatus, state, benefits, retirement, review
 }
 
 @Observable
@@ -24,6 +24,11 @@ final class OnboardingFlow {
     /// and gates "Continue", mirroring the mock's yes/no-amount step kind.
     var wantsBonus: Bool?
     var wantsCommission: Bool?
+
+    /// The payday anchor collected during intake. Held here rather than on
+    /// CalculatorState because it is persisted to a different place: the app
+    /// group, so the widget extension can read it.
+    var payAnchor: PayAnchor?
 
     var step: OnboardingStep { steps[stepIndex] }
     var isGreet: Bool { step == .greet }

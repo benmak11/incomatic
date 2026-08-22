@@ -26,6 +26,9 @@ struct EarningsBreakdownView: View {
     var showBudgetCTA: Bool = false
     var hasExistingBudget: Bool = false
     var onStartBudget: () -> Void = {}
+    /// The payday countdown, injected rather than built here so this view stays
+    /// agnostic about the loop and SessionDetailView can omit it entirely.
+    var paydayHeader: AnyView?
     @State private var showPDFAlert = false
 
     // Sage palette donut
@@ -37,6 +40,10 @@ struct EarningsBreakdownView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 AppSectionHeader(title: "Insights")
+                if let paydayHeader {
+                    paydayHeader
+                        .padding(.horizontal, 16)
+                }
                 netPayHero
                 itemizedSummaryCard
                 if let supplemental = result.supplemental {

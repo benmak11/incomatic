@@ -30,6 +30,12 @@ enum AnalyticsEventName {
     static let calculationCompleted = "calculation_completed"
     static let linkCodeGenerated = "link_code_generated"
     static let linkCodeRedeemed = "link_code_redeemed"
+    // Payday loop (R3). `paydayAnchorSet` is the load-bearing one: it defines
+    // the activated cohort that Phase 1's exit criterion is measured over.
+    static let paydayAnchorSet = "payday_anchor_set"
+    static let paydayPromptShown = "payday_prompt_shown"
+    static let paydayPromptDismissed = "payday_prompt_dismissed"
+    static let paydayOpen = "payday_open"
 }
 
 /// Batched, offline-queued analytics.
@@ -182,7 +188,13 @@ final class Analytics: ObservableObject {
 }
 
 /// Where the pending queue lives between launches.
-protocol AnalyticsStorage {
+///
+/// `nonisolated` because the app target builds with
+/// `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, which would otherwise pin this
+/// to the main actor and make `Analytics`' default argument unusable: default
+/// arguments are evaluated in a nonisolated context. Reading and writing a JSON
+/// file has no business on the main actor regardless.
+nonisolated protocol AnalyticsStorage {
     func load() -> [QueuedEvent]
     func save(_ events: [QueuedEvent])
 }
@@ -190,7 +202,7 @@ protocol AnalyticsStorage {
 /// A JSON file in Application Support. Not UserDefaults: the queue can reach a
 /// few hundred events, and UserDefaults is the wrong home for something that
 /// size and churn.
-struct FileAnalyticsStorage: AnalyticsStorage {
+nonisolated struct FileAnalyticsStorage: AnalyticsStorage {
     private var fileURL: URL? {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
         guard let base else { return nil }

@@ -85,7 +85,11 @@ struct StateSection: View {
                 Image(systemName: "info.circle.fill").foregroundColor(.incBlush).font(.system(size: 16))
             }
             VStack(alignment: .leading, spacing: 4) {
-                Text("Rule pack 2025.11")
+                // Was a hardcoded "Rule pack 2025.11", which went stale the
+                // moment the pack was bumped and the client has no way to know
+                // the minor version anyway. The callout is about multi-state
+                // withholding, so it says that instead of a version.
+                Text("Multi-state withholding")
                     .font(.system(size: 13, weight: .bold)).foregroundColor(.incText)
                 Text("Multi-state withholding split applies the work-state rate. Your state of residence still files an annual return.")
                     .font(.system(size: 12.5)).foregroundColor(.incTextDim)

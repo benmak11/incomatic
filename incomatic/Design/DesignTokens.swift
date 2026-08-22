@@ -40,6 +40,7 @@ extension Color {
     // surfaces
     static let incBg              = adaptive(UIColor(rgb: 0xF5F1EA), UIColor(rgb: 0x000000))
     static let incSurface         = adaptive(UIColor(rgb: 0xFFFFFF), UIColor(rgb: 0x1C1C1E))
+    static let incSurfaceWarm     = adaptive(UIColor(rgb: 0xFBF6EE), UIColor(rgb: 0x242426))
     // text
     static let incText            = adaptive(UIColor(rgb: 0x1F2A2A), UIColor(rgb: 0xFFFFFF))
     static let incTextDim         = adaptive(UIColor(rgb: 0x5A6868), UIColor(rgb: 0xEBEBF5, alpha: 0.60))
@@ -60,6 +61,8 @@ extension Color {
     static let incCardBorder      = adaptive(UIColor(rgb: 0xFFFFFF, alpha: 0.00), UIColor(rgb: 0xFFFFFF, alpha: 0.07))
     // controls
     static let incDisabled        = adaptive(UIColor(rgb: 0xC4CCCA), UIColor(rgb: 0x2C2C2E))
+    /// Unfilled portion of a toggle or a progress ring.
+    static let incTrack           = adaptive(UIColor(rgb: 0xE2E5E3), UIColor(rgb: 0x39393D))
     static let incBtnSolid        = adaptive(UIColor(rgb: 0x1F2A2A), UIColor(rgb: 0x2C2C2E))
     static let incBtnSolidText    = adaptive(UIColor(rgb: 0xFFFFFF), UIColor(rgb: 0xFFFFFF))
 }

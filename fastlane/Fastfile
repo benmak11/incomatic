@@ -1,8 +1,11 @@
 default_platform(:ios)
 
-APP_IDENTIFIER = "com.makusha.incomatic"
-SCHEME         = "incomatic"
-PROJECT        = "incomatic.xcodeproj"
+APP_IDENTIFIER    = "com.makusha.incomatic"
+WIDGET_IDENTIFIER = "com.makusha.incomatic.IncomaticWidget"
+APP_TARGET        = "incomatic"
+WIDGET_TARGET     = "IncomaticWidgetExtension"
+SCHEME            = "incomatic"
+PROJECT           = "incomatic.xcodeproj"
 
 platform :ios do
   before_all do
@@ -49,13 +52,28 @@ platform :ios do
     # The project uses automatic signing locally (for Xcode archives). On CI, force
     # manual signing so gym uses the match-provided distribution profile instead of
     # trying (and failing) to auto-generate one.
+    #
+    # Scoped per target. The widget extension is signed with its own profile:
+    # an appex is a separate code-signed bundle with its own bundle id, so one
+    # profile cannot cover both, and leaving the extension on automatic signing
+    # while the app is manual fails the export rather than falling back.
     update_code_signing_settings(
       use_automatic_signing: false,
       path:                  PROJECT,
+      targets:               [APP_TARGET],
       bundle_identifier:     APP_IDENTIFIER,
       team_id:               "X8E58H8HK5",
       code_sign_identity:    "Apple Distribution",
       profile_name:          "match AppStore #{APP_IDENTIFIER}"
+    )
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path:                  PROJECT,
+      targets:               [WIDGET_TARGET],
+      bundle_identifier:     WIDGET_IDENTIFIER,
+      team_id:               "X8E58H8HK5",
+      code_sign_identity:    "Apple Distribution",
+      profile_name:          "match AppStore #{WIDGET_IDENTIFIER}"
     )
     build_app(
       project:       PROJECT,
@@ -64,7 +82,10 @@ platform :ios do
       xcargs:        version_xcargs,
       export_options: {
         signingStyle:         "manual",
-        provisioningProfiles: { APP_IDENTIFIER => "match AppStore #{APP_IDENTIFIER}" }
+        provisioningProfiles: {
+          APP_IDENTIFIER    => "match AppStore #{APP_IDENTIFIER}",
+          WIDGET_IDENTIFIER => "match AppStore #{WIDGET_IDENTIFIER}"
+        }
       }
     )
     upload_to_testflight(

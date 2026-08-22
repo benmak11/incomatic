@@ -17,7 +17,9 @@ import UIKit
 struct OnboardingNotebookView: View {
     @Bindable var state: CalculatorState
     let userName: String?
-    let onCalculate: () -> Void
+    /// Carries the payday anchor out with it: the flow owns the anchor during
+    /// intake, but persisting it belongs to whoever owns PaydayStore.
+    let onCalculate: (PayAnchor?) -> Void
 
     @State private var flow = OnboardingFlow()
     @State private var keyboardVisible = false
@@ -134,6 +136,7 @@ struct OnboardingNotebookView: View {
         case .greet, .review:  return ""
         case .wage:            return "First, let's begin by asking; what's your annual or hourly wage?"
         case .payFrequency:    return "How often do you get paid?"
+        case .payday:          return "When does your pay arrive?"
         case .bonus:           return "Do you get a one-time bonus?"
         case .commission:      return "Any commission on top of that?"
         case .filingStatus:    return "What's your filing status?"
@@ -154,6 +157,8 @@ struct OnboardingNotebookView: View {
             wageStep
         case .payFrequency:
             payFrequencyStep
+        case .payday:
+            paydayStep
         case .bonus:
             bonusStep
         case .commission:
@@ -204,6 +209,24 @@ struct OnboardingNotebookView: View {
                 }
             }
         }
+    }
+
+    /// Candidate C from the design. Reaches new installs only, which is exactly
+    /// why the existing-user banner on Calculator is not optional.
+    private var paydayStep: some View {
+        IncCard {
+            AnchorEditor(
+                frequency: state.payFrequency,
+                anchor: Binding(
+                    get: { flow.payAnchor ?? PayAnchor.draft(for: state.payFrequency) },
+                    set: { flow.payAnchor = $0 }
+                )
+            )
+        }
+        // The onboarding step has no dismiss of its own — it is passed by
+        // moving on. Its conversion is therefore `anchor_set(onboarding)`
+        // against this, which is why it still needs a shown event.
+        .onAppear { PaydayAnalytics.promptShown(.onboarding) }
     }
 
     private var bonusStep: some View {
@@ -350,7 +373,7 @@ struct OnboardingNotebookView: View {
                 primaryLabel: userName.map { "Looks good, \($0) calculate" } ?? "Looks good, calculate",
                 disabled: false,
                 ribbon: nil,
-                action: onCalculate
+                action: { onCalculate(flow.payAnchor) }
             )
         default:
             let preview = livePreview(state: state)
