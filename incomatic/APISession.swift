@@ -40,11 +40,21 @@ final class UpgradeGate: ObservableObject {
 }
 
 enum APISession {
-    /// `ios/1.9.0`, from MARKETING_VERSION. The backend records this on every
+    /// `ios/1.14.0`, from MARKETING_VERSION, with `-debug` appended for builds that
+    /// did not come out of the release pipeline. The backend records this on every
     /// request and compares it against its configured minimum.
+    ///
+    /// The suffix exists because dev and Simulator builds post to **production**, so
+    /// without it every local run is indistinguishable from a real install in the
+    /// analytics store. `ClientVersion` ignores anything after the version, so the
+    /// suffix cannot affect the minimum-version gate.
     static let clientHeader: String = {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        #if DEBUG
+        return "ios/\(version ?? "0.0.0")-debug"
+        #else
         return "ios/\(version ?? "0.0.0")"
+        #endif
     }()
 
     static let appStoreURL = URL(string: "https://apps.apple.com/app/id6778857123")
