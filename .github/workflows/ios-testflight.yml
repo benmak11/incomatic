@@ -8,6 +8,15 @@ on:
 permissions:
   contents: write   # the beta lane pushes a build/X.Y.Z+N tag after uploading
 
+# Serialised on the build number, not on the ref. The beta lane derives it from
+# latest_testflight_build_number + 1, so two concurrent runs read the same value
+# and both upload that number — the second is rejected by App Store Connect after
+# a full archive has already been built. Never cancel: a cancelled run can land
+# between the upload and the build/X.Y.Z+N tag that records it.
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
 jobs:
   testflight:
     name: Build and upload to TestFlight
