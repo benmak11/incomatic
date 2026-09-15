@@ -7,6 +7,15 @@ on:
 permissions:
   contents: write
 
+# Two merges close together otherwise both read the same "latest tag" and compute
+# the same next version, so one run fails on a duplicate tag or the versions land
+# out of order. Higher stakes here than in salary-calculator: this tag is pushed
+# with TAG_PAT specifically so it triggers ios-testflight.yml, so a tagging race
+# turns into a duplicated or skipped TestFlight build.
+concurrency:
+  group: tag-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   tag:
     name: Create version tag
