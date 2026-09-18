@@ -35,3 +35,26 @@ extension BudgetBucket {
         }
     }
 }
+
+/// The circular chevron used to leave any budget screen. One definition, so the
+/// setup steps and the finished shell cannot drift apart visually.
+///
+/// `BudgetFlowView` is presented as a `fullScreenCover`, which has no swipe to
+/// dismiss and no system back. Every step therefore has to draw its own way out,
+/// or the user is stuck - which is exactly the bug this was extracted to fix.
+struct BudgetBackButton: View {
+    let label: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "chevron.left")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.incTextDim)
+                .frame(width: 30, height: 30)
+                .background(Circle().fill(Color.incSurface))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
+}
