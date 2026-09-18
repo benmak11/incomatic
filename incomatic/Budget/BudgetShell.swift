@@ -33,15 +33,7 @@ private struct BudgetSectionHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Button(action: onBack) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.incTextDim)
-                        .frame(width: 30, height: 30)
-                        .background(Circle().fill(Color.incSurface))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Back")
+                BudgetBackButton(label: "Back", action: onBack)
                 Spacer()
             }
             .padding(.bottom, 10)

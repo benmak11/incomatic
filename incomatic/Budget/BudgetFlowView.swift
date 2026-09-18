@@ -13,6 +13,11 @@
 //  actually runs, not just on the first-time path, so there's no way to
 //  reach the AI call without having granted it.
 //
+//  Presented as a fullScreenCover, which has no swipe-to-dismiss and no system
+//  back. Every step therefore draws its own way out: only the shell used to,
+//  which left anyone on goals or expenses (or dropped back there by "Not now"
+//  on the consent sheet) with no way to leave at all.
+//
 
 import SwiftUI
 
@@ -57,22 +62,33 @@ struct BudgetFlowView: View {
         Group {
             switch step {
             case .goals:
-                GoalsEntryView(goals: $goals, onContinue: { step = .expenses })
+                // Nothing precedes goals, so "back" here leaves the flow. Unsaved
+                // edits are discarded; nothing persists until generation runs.
+                leaving(label: "Close", action: onClose) {
+                    GoalsEntryView(goals: $goals, onContinue: { step = .expenses })
+                }
             case .expenses:
-                ExpenseEditorView(
-                    expenses: $expenses,
-                    payFrequency: calculatorState.payFrequency,
-                    onContinue: { step = .generating }
-                )
+                leaving(label: "Back", action: { step = .goals }) {
+                    ExpenseEditorView(
+                        expenses: $expenses,
+                        payFrequency: calculatorState.payFrequency,
+                        onContinue: { step = .generating }
+                    )
+                }
             case .generating:
-                BudgetGeneratingView()
-                    .task {
-                        if hasConsented {
-                            await generate()
-                        } else {
-                            showingConsent = true
+                // Closing here cancels the in-flight task with the view. The budget
+                // itself may already be saved by then, which is fine: the next open
+                // starts at generating again rather than losing the goals.
+                leaving(label: "Cancel", action: onClose) {
+                    BudgetGeneratingView()
+                        .task {
+                            if hasConsented {
+                                await generate()
+                            } else {
+                                showingConsent = true
+                            }
                         }
-                    }
+                }
             case .shell:
                 if let plan {
                     BudgetShell(plan: plan, goals: goals, onBack: onClose)
@@ -92,6 +108,14 @@ struct BudgetFlowView: View {
                 }
             )
         }
+    }
+
+    private func leaving<Content: View>(
+        label: String,
+        action: @escaping () -> Void,
+        @ViewBuilder content: @escaping () -> Content
+    ) -> some View {
+        BudgetStepChrome(label: label, action: action, content: content)
     }
 
     private func generate() async {
@@ -118,5 +142,31 @@ struct BudgetFlowView: View {
             rationale: aiPlan?.rationale
         )
         step = .shell
+    }
+}
+
+/// The way out, drawn above a budget setup step.
+///
+/// The shell draws its own back control inside its header. The setup steps use
+/// `AppSectionHeader`, which has no leading slot, so the control sits above it at the
+/// same horizontal inset as the title. A separate view rather than a private helper so
+/// the one property that matters - that the exit exists and fires - can be tested
+/// without constructing the flow's heavyweight inputs.
+struct BudgetStepChrome<Content: View>: View {
+    let label: String
+    let action: () -> Void
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                BudgetBackButton(label: label, action: action)
+                Spacer()
+            }
+            .padding(.horizontal, 26)
+            .padding(.top, 12)
+            .padding(.bottom, 4)
+            content()
+        }
     }
 }
